@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Range Control</title>
+  <meta name="description" content="Rob's testing ground — cybersecurity, space, and technology experiments, logged as they happen." />
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+
+  <header class="bezel">
+    <div class="bezel-inner">
+      <a href="#top" class="mark"><span class="dot" aria-hidden="true"></span> RANGE CONTROL</a>
+      <div class="bezel-right">
+        <span id="clock" class="clock" aria-live="off"></span>
+        <button id="theme-toggle" class="rocker" type="button" role="switch" aria-checked="false" data-icon=""></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap" id="top">
+
+    <section class="hero">
+      <div>
+        <p class="eyebrow">cybersecurity &middot; space &middot; whatever's next</p>
+        <h1>A place to break things on purpose.</h1>
+        <p>
+          This is the range — separate from the day job, separate from the other
+          projects. Security experiments, space and technology rabbit holes,
+          anything worth building just to see what happens. Modules land here
+          as they're ready; the notebook tracks the process.
+        </p>
+        <div class="status-line">
+          <span class="led" aria-hidden="true"></span>
+          <span>RANGE CLEAR &middot; no modules on the board yet</span>
+        </div>
+      </div>
+
+      <svg class="radar" viewBox="0 0 200 200" aria-hidden="true">
+        <defs>
+          <linearGradient id="sweepFade" x1="100" y1="100" x2="190" y2="100" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="var(--accent)" stop-opacity="0.55"/>
+            <stop offset="1" stop-color="var(--accent)" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <circle class="ring" cx="100" cy="100" r="90"/>
+        <circle class="ring" cx="100" cy="100" r="60"/>
+        <circle class="ring" cx="100" cy="100" r="30"/>
+        <line class="cross" x1="10" y1="100" x2="190" y2="100"/>
+        <line class="cross" x1="100" y1="10" x2="100" y2="190"/>
+        <g class="sweep-group">
+          <path class="sweep" fill="url(#sweepFade)" d="M100,100 L100,10 A90,90 0 0,1 163.6,36.4 Z"/>
+        </g>
+        <circle class="blip b1" cx="142" cy="66" r="3.5"/>
+        <circle class="blip b2" cx="68" cy="132" r="3.5"/>
+        <circle class="blip b3" cx="128" cy="146" r="3.5"/>
+      </svg>
+    </section>
+
+    <section class="block" id="modules">
+      <div class="block-head">
+        <h2>Modules</h2>
+        <span class="count">(<span id="module-count">0</span>)</span>
+      </div>
+
+      <div class="module-grid" id="module-grid" hidden></div>
+
+      <div class="empty" id="module-empty">
+        No modules logged yet. Add entries to <code>data/modules.json</code> — see
+        <code>data/modules.example.json</code> for the shape, and
+        <code>README.md</code> for the full field list.
+      </div>
+    </section>
+
+    <section class="block" id="notebook">
+      <div class="block-head">
+        <h2>Notebook</h2>
+        <span class="count">(<span id="notebook-count">0</span>)</span>
+      </div>
+
+      <div id="notebook-feed" hidden></div>
+
+      <div class="empty" id="notebook-empty">
+        Notebook's empty. Add entries to <code>data/notebook.json</code> — see
+        <code>data/notebook.example.json</code> for the shape. Newest entries render first.
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="wrap">
+    <span>Static build &middot; no framework &middot; deployed via Cloudflare Pages</span>
+    <span>Theme follows system, override with the switch above</span>
+  </footer>
+
+  <script src="assets/js/main.js"></script>
+</body>
+</html>
