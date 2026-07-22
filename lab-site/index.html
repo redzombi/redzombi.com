@@ -15,6 +15,7 @@
     <div class="bezel-inner">
       <a href="#top" class="mark"><span class="prompt">~$</span> REDZOMBI LABS<span class="cursor" aria-hidden="true"></span></a>
       <div class="bezel-right">
+        <span id="uptime" class="uptime" aria-live="polite"></span>
         <span id="clock" class="clock" aria-live="off"></span>
         <button id="theme-toggle" class="rocker" type="button" role="switch" aria-checked="false">
           <span>CRT</span><span>PRINT</span>
@@ -93,6 +94,23 @@
     <span>Static build &middot; no framework &middot; deployed via Cloudflare Pages</span>
     <span>Theme follows system, override with the switch above</span>
   </footer>
+
+  <!-- command palette -->
+  <div id="palette" class="palette" hidden>
+    <div class="palette-backdrop"></div>
+    <div class="palette-box">
+      <input id="palette-input" class="palette-input" type="text" placeholder="search posts, run commands... (? for help)" />
+      <div id="palette-results" class="palette-results"></div>
+    </div>
+  </div>
+
+  <!-- boot sequence -->
+  <div id="boot-sequence" class="boot-sequence" hidden>
+    <div class="boot-content">
+      <div class="boot-text"></div>
+      <button class="boot-skip">press any key to continue...</button>
+    </div>
+  </div>
 
   <script src="assets/js/main.js" defer></script>
 </body>

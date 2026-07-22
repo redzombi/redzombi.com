@@ -45,12 +45,11 @@
     });
   }
 
-  // If user hasn't manually overridden, keep following system changes live
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () {
     if (!localStorage.getItem(STORAGE_KEY)) applyTheme("auto");
   });
 
-  /* ---------- live clock (local time, quiet status-bar detail) ---------- */
+  /* ---------- live clock ---------- */
   const clockEl = document.getElementById("clock");
   function tickClock() {
     if (!clockEl) return;
@@ -59,6 +58,20 @@
   }
   tickClock();
   setInterval(tickClock, 1000 * 15);
+
+  /* ---------- uptime counter (since relaunch 2026-07-22) ---------- */
+  const uptimeEl = document.getElementById("uptime");
+  const LAUNCH_DATE = new Date("2026-07-22T00:00:00").getTime();
+  function tickUptime() {
+    if (!uptimeEl) return;
+    const now = Date.now();
+    const ms = now - LAUNCH_DATE;
+    const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    uptimeEl.textContent = days + "d " + String(hours).padStart(2, "0") + "h";
+  }
+  tickUptime();
+  setInterval(tickUptime, 1000 * 60);
 
   /* ---------- shared helpers ---------- */
   async function loadJSON(path) {
@@ -81,6 +94,75 @@
   function byDateDesc(a, b) {
     return new Date(b.date) - new Date(a.date);
   }
+
+  /* ---------- boot sequence (first load only) ---------- */
+  function showBootSequence() {
+    const bootEl = document.getElementById("boot-sequence");
+    const bootText = bootEl.querySelector(".boot-text");
+    if (!bootEl) return;
+
+    const messages = [
+      "redzombi.com [v0.1.0]",
+      "booting up...",
+      "",
+      "// digital playground",
+      "// no roadmap. no deadline.",
+      "",
+      "ready.",
+    ];
+
+    let idx = 0;
+    const interval = setInterval(function () {
+      if (idx < messages.length) {
+        bootText.textContent += (bootText.textContent ? "\n" : "") + messages[idx];
+        idx++;
+      } else {
+        clearInterval(interval);
+      }
+    }, 80);
+
+    bootEl.hidden = false;
+
+    function closeBoot() {
+      bootEl.hidden = true;
+      localStorage.setItem("redzombi-boot-skip", "true");
+      document.removeEventListener("keydown", closeBoot);
+      document.removeEventListener("click", closeBoot);
+    }
+
+    bootEl.addEventListener("keydown", closeBoot);
+    bootEl.addEventListener("click", closeBoot);
+  }
+
+  if (!localStorage.getItem("redzombi-boot-skip")) {
+    showBootSequence();
+  }
+
+  /* ---------- random transmissions (glitch effect) ---------- */
+  const TRANSMISSIONS = [
+    "// lost signal",
+    "// signal degraded",
+    "// [ERROR]",
+    "// --",
+    "// scanning...",
+    "// offline",
+  ];
+
+  function showTransmission() {
+    const messages = document.querySelectorAll(".log-entry p, .post-item p");
+    if (messages.length > 0) {
+      const random = messages[Math.floor(Math.random() * messages.length)];
+      const tx = document.createElement("span");
+      tx.className = "transmission";
+      tx.textContent = TRANSMISSIONS[Math.floor(Math.random() * TRANSMISSIONS.length)];
+      random.parentNode.insertBefore(tx, random.nextSibling);
+      setTimeout(function () { tx.remove(); }, 300);
+    }
+  }
+
+  window.addEventListener("scroll", function () {
+    if (Math.random() < 0.05) showTransmission();
+  });
 
   /* ---------- log ---------- */
   function renderLog(entries) {
@@ -105,14 +187,29 @@
     feed.innerHTML = sorted
       .map(function (e) {
         const tag = e.tag ? '<span class="log-tag">#' + escapeHTML(e.tag) + "</span>" : "";
+        const copyBtn = '<button class="copy-btn" data-copy="log" title="copy to clipboard">copy</button>';
         return (
           '<article class="log-entry">' +
-          '<div class="log-line"><time>' + escapeHTML(e.date) + "</time>" + tag + "</div>" +
+          '<div class="log-line"><time>' + escapeHTML(e.date) + "</time>" + tag + copyBtn + "</div>" +
           "<p>" + escapeHTML(e.body) + "</p>" +
           "</article>"
         );
       })
       .join("");
+
+    document.querySelectorAll(".log-entry .copy-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const text = btn.parentNode.nextElementSibling.textContent;
+        navigator.clipboard.writeText(text).then(function () {
+          btn.classList.add("copied");
+          btn.textContent = "✓";
+          setTimeout(function () {
+            btn.classList.remove("copied");
+            btn.textContent = "copy";
+          }, 1500);
+        });
+      });
+    });
   }
 
   /* ---------- projects ---------- */
@@ -199,7 +296,6 @@
 
     const meta = postIndex.find(function (p) { return p.slug === slug; });
     if (!meta) {
-      // unknown slug — fall back to list view
       window.location.hash = "posts";
       return;
     }
@@ -235,6 +331,162 @@
   }
 
   window.addEventListener("hashchange", routePosts);
+
+  /* ---------- command palette ---------- */
+  const paletteEl = document.getElementById("palette");
+  const paletteInput = document.getElementById("palette-input");
+  const paletteResults = document.getElementById("palette-results");
+
+  const COMMANDS = [
+    { name: "help", desc: "show keyboard shortcuts" },
+    { name: "clear", desc: "clear all (just a prompt easter egg)" },
+    { name: "uptime", desc: "show system uptime" },
+  ];
+
+  function openPalette() {
+    if (paletteEl) {
+      paletteEl.hidden = false;
+      paletteInput.focus();
+      paletteInput.value = "";
+      searchPalette("");
+    }
+  }
+
+  function closePalette() {
+    if (paletteEl) paletteEl.hidden = true;
+  }
+
+  function searchPalette(query) {
+    query = query.toLowerCase();
+
+    let results = [];
+
+    // search posts
+    postIndex.forEach(function (p) {
+      if (
+        p.title.toLowerCase().includes(query) ||
+        (Array.isArray(p.tags) && p.tags.some(function (t) { return t.toLowerCase().includes(query); }))
+      ) {
+        results.push({
+          type: "post",
+          name: p.title,
+          desc: "post",
+          action: function () { window.location.hash = "post/" + p.slug; closePalette(); },
+        });
+      }
+    });
+
+    // search commands
+    COMMANDS.forEach(function (cmd) {
+      if (cmd.name.includes(query) || cmd.desc.includes(query)) {
+        results.push({
+          type: "command",
+          name: cmd.name,
+          desc: cmd.desc,
+          action: function () { executeCommand(cmd.name); closePalette(); },
+        });
+      }
+    });
+
+    paletteResults.innerHTML = results
+      .map(function (r, i) {
+        return (
+          '<div class="palette-item ' + r.type + '" data-idx="' + i + '">' +
+          '<strong>' + escapeHTML(r.name) + "</strong> " +
+          '<span style="color: var(--text-muted); font-size: 11px;">// ' + escapeHTML(r.desc) + "</span>" +
+          "</div>"
+        );
+      })
+      .join("");
+
+    document.querySelectorAll(".palette-item").forEach(function (item, i) {
+      item.addEventListener("click", function () { results[i].action(); });
+      item.addEventListener("mouseenter", function () {
+        document.querySelectorAll(".palette-item").forEach(function (el) { el.classList.remove("selected"); });
+        item.classList.add("selected");
+      });
+    });
+  }
+
+  function executeCommand(cmd) {
+    switch (cmd) {
+      case "help":
+        alert(
+          "keyboard shortcuts:\n" +
+          "/ - open command palette\n" +
+          "j/k - next/prev post\n" +
+          "h/l - scroll left/right\n" +
+          "? - this help"
+        );
+        break;
+      case "clear":
+        alert("root@redzombi:~# clear\n\n");
+        break;
+      case "uptime":
+        alert("System uptime: " + (uptimeEl ? uptimeEl.textContent : "unknown"));
+        break;
+    }
+  }
+
+  if (paletteInput) {
+    paletteInput.addEventListener("input", function () { searchPalette(paletteInput.value); });
+    paletteInput.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") closePalette();
+      if (e.key === "Enter") {
+        const first = paletteResults.querySelector(".palette-item");
+        if (first) first.click();
+      }
+    });
+  }
+
+  if (paletteEl) {
+    paletteEl.querySelector(".palette-backdrop").addEventListener("click", closePalette);
+  }
+
+  /* ---------- vim keybinds ---------- */
+  const KEY_REPEAT_DELAY = 300;
+  let lastKeyTime = {};
+
+  document.addEventListener("keydown", function (e) {
+    const now = Date.now();
+    const key = e.key.toLowerCase();
+
+    // ignore if typing in an input
+    if (e.target.tagName === "INPUT") return;
+
+    // command palette
+    if (key === "/") {
+      e.preventDefault();
+      openPalette();
+      return;
+    }
+
+    // help
+    if (key === "?") {
+      e.preventDefault();
+      executeCommand("help");
+      return;
+    }
+
+    // vim keybinds (prevent repeat spam)
+    if (lastKeyTime[key] && now - lastKeyTime[key] < KEY_REPEAT_DELAY) return;
+    lastKeyTime[key] = now;
+
+    // hjkl scrolling
+    if (key === "h") {
+      e.preventDefault();
+      window.scrollBy(-100, 0);
+    } else if (key === "l") {
+      e.preventDefault();
+      window.scrollBy(100, 0);
+    } else if (key === "j") {
+      e.preventDefault();
+      window.scrollBy(0, 200);
+    } else if (key === "k") {
+      e.preventDefault();
+      window.scrollBy(0, -200);
+    }
+  });
 
   /* ---------- boot ---------- */
   Promise.all([
