@@ -1,0 +1,14 @@
+[
+  {
+    "name": "ADS-B Tracker",
+    "status": "live",
+    "description": "Real-time aircraft tracking off a local receiver, piped into a dashboard.",
+    "url": "https://adsb.example.com",
+    "linkLabel": "open dashboard \u2192"
+  },
+  {
+    "name": "Some New Idea",
+    "status": "idea",
+    "description": "Not started. Status can be idea, building, live, or archived."
+  }
+]

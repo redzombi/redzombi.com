@@ -29,7 +29,8 @@ there's nothing to conflict with the initial push.)
    site, so set it exactly like this:
    - **Framework preset:** None
    - **Build command:** *(leave blank)*
-   - **Build output directory:** `/`
+   - **Build output directory:** `lab-site` (the site lives in this
+     subdirectory of the repo, not the repo root)
 5. Click **Save and Deploy**. First deploy takes under a minute.
 
 You'll get a `<project-name>.pages.dev` URL immediately — that's live and

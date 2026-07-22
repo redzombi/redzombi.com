@@ -1,6 +1,6 @@
 /* ==========================================================================
-   SIGNAL BENCH — site script
-   No build step, no dependencies. Edit directly.
+   REDZOMBI LABS — site script
+   No build step, no bundler. marked.js loaded via CDN <script> in index.html.
    ========================================================================== */
 
 (function () {
@@ -9,23 +9,23 @@
   /* ---------- theme: auto by default, manual override persisted ---------- */
   const root = document.documentElement;
   const rocker = document.getElementById("theme-toggle");
-  const STORAGE_KEY = "signal-bench-theme"; // "day" | "night" | absent = auto
+  const STORAGE_KEY = "redzombi-labs-theme"; // "crt" | "print" | absent = auto
 
-  function systemPrefersNight() {
+  function systemPrefersCrt() {
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   }
 
   function applyTheme(mode) {
-    // mode: "day" | "night" | "auto"
+    // mode: "crt" | "print" | "auto"
     if (mode === "auto") {
       root.removeAttribute("data-theme");
     } else {
       root.setAttribute("data-theme", mode);
     }
-    const effective = mode === "auto" ? (systemPrefersNight() ? "night" : "day") : mode;
+    const effective = mode === "auto" ? (systemPrefersCrt() ? "crt" : "print") : mode;
     if (rocker) {
       rocker.setAttribute("data-state", effective);
-      rocker.setAttribute("aria-checked", effective === "night");
+      rocker.setAttribute("aria-checked", effective === "crt");
       rocker.setAttribute(
         "aria-label",
         "Theme: " + effective + " (click to override, auto-follows system by default)"
@@ -38,8 +38,8 @@
 
   if (rocker) {
     rocker.addEventListener("click", function () {
-      const current = root.getAttribute("data-theme") || (systemPrefersNight() ? "night" : "day");
-      const next = current === "night" ? "day" : "night";
+      const current = root.getAttribute("data-theme") || (systemPrefersCrt() ? "crt" : "print");
+      const next = current === "crt" ? "print" : "crt";
       localStorage.setItem(STORAGE_KEY, next);
       applyTheme(next);
     });
@@ -60,7 +60,7 @@
   tickClock();
   setInterval(tickClock, 1000 * 15);
 
-  /* ---------- data-driven sections: modules + notebook ---------- */
+  /* ---------- shared helpers ---------- */
   async function loadJSON(path) {
     try {
       const res = await fetch(path, { cache: "no-store" });
@@ -78,44 +78,15 @@
     return div.innerHTML;
   }
 
-  function renderModules(modules) {
-    const grid = document.getElementById("module-grid");
-    const empty = document.getElementById("module-empty");
-    const count = document.getElementById("module-count");
-    if (!grid) return;
-
-    if (!modules.length) {
-      grid.hidden = true;
-      if (empty) empty.hidden = false;
-      if (count) count.textContent = "0";
-      return;
-    }
-
-    if (empty) empty.hidden = true;
-    grid.hidden = false;
-    if (count) count.textContent = String(modules.length);
-
-    grid.innerHTML = modules
-      .map(function (m) {
-        const link = m.url
-          ? '<a href="' + escapeHTML(m.url) + '">' + escapeHTML(m.linkLabel || "open \u2192") + "</a>"
-          : "";
-        return (
-          '<article class="module-card">' +
-          '<div class="tag">' + escapeHTML(m.status || "active") + "</div>" +
-          "<h3>" + escapeHTML(m.title) + "</h3>" +
-          "<p>" + escapeHTML(m.description) + "</p>" +
-          link +
-          "</article>"
-        );
-      })
-      .join("");
+  function byDateDesc(a, b) {
+    return new Date(b.date) - new Date(a.date);
   }
 
-  function renderNotebook(entries) {
-    const feed = document.getElementById("notebook-feed");
-    const empty = document.getElementById("notebook-empty");
-    const count = document.getElementById("notebook-count");
+  /* ---------- log ---------- */
+  function renderLog(entries) {
+    const feed = document.getElementById("log-feed");
+    const empty = document.getElementById("log-empty");
+    const count = document.getElementById("log-count");
     if (!feed) return;
 
     if (!entries.length) {
@@ -129,31 +100,151 @@
     feed.hidden = false;
     if (count) count.textContent = String(entries.length);
 
-    const sorted = entries.slice().sort(function (a, b) {
-      return new Date(b.date) - new Date(a.date);
-    });
+    const sorted = entries.slice().sort(byDateDesc);
 
     feed.innerHTML = sorted
       .map(function (e) {
-        const tag = e.tag
-          ? '<span class="entry-tag">' + escapeHTML(e.tag) + "</span>"
-          : "";
+        const tag = e.tag ? '<span class="log-tag">#' + escapeHTML(e.tag) + "</span>" : "";
         return (
-          '<article class="notebook-entry">' +
-          "<time>" + escapeHTML(e.date) + "</time>" +
-          "<div><h3>" + escapeHTML(e.title) + "</h3>" +
+          '<article class="log-entry">' +
+          '<div class="log-line"><time>' + escapeHTML(e.date) + "</time>" + tag + "</div>" +
           "<p>" + escapeHTML(e.body) + "</p>" +
-          tag +
-          "</div></article>"
+          "</article>"
         );
       })
       .join("");
   }
 
-  Promise.all([loadJSON("data/modules.json"), loadJSON("data/notebook.json")]).then(
-    function (results) {
-      renderModules(results[0] || []);
-      renderNotebook(results[1] || []);
+  /* ---------- projects ---------- */
+  function renderProjects(projects) {
+    const grid = document.getElementById("project-grid");
+    const empty = document.getElementById("project-empty");
+    const count = document.getElementById("project-count");
+    if (!grid) return;
+
+    if (!projects.length) {
+      grid.hidden = true;
+      if (empty) empty.hidden = false;
+      if (count) count.textContent = "0";
+      return;
     }
-  );
+
+    if (empty) empty.hidden = true;
+    grid.hidden = false;
+    if (count) count.textContent = String(projects.length);
+
+    grid.innerHTML = projects
+      .map(function (p) {
+        const status = (p.status || "idea").toLowerCase();
+        const link = p.url
+          ? '<a href="' + escapeHTML(p.url) + '">' + escapeHTML(p.linkLabel || "open \u2192") + "</a>"
+          : "";
+        return (
+          '<article class="card project-card">' +
+          '<div class="status ' + escapeHTML(status) + '">' + escapeHTML((p.status || "IDEA").toUpperCase()) + "</div>" +
+          "<h3>" + escapeHTML(p.name) + "</h3>" +
+          "<p>" + escapeHTML(p.description) + "</p>" +
+          link +
+          "</article>"
+        );
+      })
+      .join("");
+  }
+
+  /* ---------- posts (list + hash-routed detail) ---------- */
+  let postIndex = [];
+
+  function renderPostList() {
+    const list = document.getElementById("post-list");
+    const empty = document.getElementById("post-empty");
+    const count = document.getElementById("post-count");
+    if (!list) return;
+
+    if (!postIndex.length) {
+      list.hidden = true;
+      if (empty) empty.hidden = false;
+      if (count) count.textContent = "0";
+      return;
+    }
+
+    if (empty) empty.hidden = true;
+    list.hidden = false;
+    if (count) count.textContent = String(postIndex.length);
+
+    const sorted = postIndex.slice().sort(byDateDesc);
+
+    list.innerHTML = sorted
+      .map(function (p) {
+        const tags = Array.isArray(p.tags)
+          ? p.tags.map(function (t) { return '<span class="tag">#' + escapeHTML(t) + "</span>"; }).join(" ")
+          : "";
+        return (
+          '<article class="post-item">' +
+          "<time>" + escapeHTML(p.date) + "</time>" +
+          '<h3><a href="#post/' + escapeHTML(p.slug) + '">' + escapeHTML(p.title) + "</a></h3>" +
+          "<p>" + escapeHTML(p.summary) + "</p>" +
+          tags +
+          "</article>"
+        );
+      })
+      .join("");
+  }
+
+  async function renderPostDetail(slug) {
+    const listEl = document.getElementById("post-list");
+    const emptyEl = document.getElementById("post-empty");
+    const detailEl = document.getElementById("post-detail");
+    const articleEl = document.getElementById("post-article");
+    if (!detailEl || !articleEl) return;
+
+    const meta = postIndex.find(function (p) { return p.slug === slug; });
+    if (!meta) {
+      // unknown slug — fall back to list view
+      window.location.hash = "posts";
+      return;
+    }
+
+    try {
+      const res = await fetch("posts/" + encodeURIComponent(slug) + ".md", { cache: "no-store" });
+      const md = res.ok ? await res.text() : "*Could not load this post.*";
+      articleEl.innerHTML = window.marked ? window.marked.parse(md) : escapeHTML(md);
+    } catch (err) {
+      console.warn("Could not load post", slug, err);
+      articleEl.innerHTML = "<p><em>Could not load this post.</em></p>";
+    }
+
+    if (listEl) listEl.hidden = true;
+    if (emptyEl) emptyEl.hidden = true;
+    detailEl.hidden = false;
+  }
+
+  function showPostList() {
+    const detailEl = document.getElementById("post-detail");
+    if (detailEl) detailEl.hidden = true;
+    renderPostList();
+  }
+
+  function routePosts() {
+    const hash = window.location.hash.replace(/^#/, "");
+    const match = hash.match(/^post\/(.+)$/);
+    if (match) {
+      renderPostDetail(decodeURIComponent(match[1]));
+    } else {
+      showPostList();
+    }
+  }
+
+  window.addEventListener("hashchange", routePosts);
+
+  /* ---------- boot ---------- */
+  Promise.all([
+    loadJSON("data/log.json"),
+    loadJSON("data/projects.json"),
+    loadJSON("data/posts.json"),
+  ]).then(function (results) {
+    renderLog(results[0] || []);
+    renderProjects(results[1] || []);
+    postIndex = results[2] || [];
+    routePosts();
+  });
 })();
