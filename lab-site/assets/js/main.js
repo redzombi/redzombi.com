@@ -99,6 +99,7 @@
   function showBootSequence() {
     const bootEl = document.getElementById("boot-sequence");
     const bootText = bootEl.querySelector(".boot-text");
+    const bootButton = bootEl.querySelector(".boot-skip");
     if (!bootEl) return;
 
     const messages = [
@@ -123,15 +124,20 @@
 
     bootEl.hidden = false;
 
-    function closeBoot() {
+    const closeBoot = function () {
       bootEl.hidden = true;
       localStorage.setItem("redzombi-boot-skip", "true");
       document.removeEventListener("keydown", closeBoot);
       document.removeEventListener("click", closeBoot);
-    }
+      window.removeEventListener("keydown", closeBoot);
+      if (bootButton) bootButton.removeEventListener("click", closeBoot);
+    };
 
+    // Multiple attach points to ensure it works
     document.addEventListener("keydown", closeBoot);
     document.addEventListener("click", closeBoot);
+    window.addEventListener("keydown", closeBoot);
+    if (bootButton) bootButton.addEventListener("click", closeBoot);
   }
 
   if (!localStorage.getItem("redzombi-boot-skip")) {
