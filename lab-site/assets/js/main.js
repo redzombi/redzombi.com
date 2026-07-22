@@ -130,8 +130,8 @@
       document.removeEventListener("click", closeBoot);
     }
 
-    bootEl.addEventListener("keydown", closeBoot);
-    bootEl.addEventListener("click", closeBoot);
+    document.addEventListener("keydown", closeBoot);
+    document.addEventListener("click", closeBoot);
   }
 
   if (!localStorage.getItem("redzombi-boot-skip")) {
