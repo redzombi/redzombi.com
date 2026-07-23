@@ -494,15 +494,35 @@
     }
   });
 
+  /* ---------- hero status line ---------- */
+  function updateHeroStatus(logCount, projectCount, postCount) {
+    const statusText = document.getElementById("hero-status");
+    if (!statusText) return;
+
+    const parts = [];
+    if (projectCount) parts.push(projectCount + " project" + (projectCount === 1 ? "" : "s"));
+    if (postCount) parts.push(postCount + " post" + (postCount === 1 ? "" : "s"));
+    if (logCount) parts.push(logCount + " log entr" + (logCount === 1 ? "y" : "ies"));
+
+    statusText.textContent = parts.length
+      ? "STATUS: ACTIVE · " + parts.join(", ")
+      : "STATUS: EMPTY · nothing published yet";
+  }
+
   /* ---------- boot ---------- */
   Promise.all([
     loadJSON("data/log.json"),
     loadJSON("data/projects.json"),
     loadJSON("data/posts.json"),
   ]).then(function (results) {
-    renderLog(results[0] || []);
-    renderProjects(results[1] || []);
-    postIndex = results[2] || [];
+    const logEntries = results[0] || [];
+    const projects = results[1] || [];
+    const posts = results[2] || [];
+
+    renderLog(logEntries);
+    renderProjects(projects);
+    postIndex = posts;
     routePosts();
+    updateHeroStatus(logEntries.length, projects.length, posts.length);
   });
 })();
