@@ -5,6 +5,37 @@ in `data/log.json` and is a different kind of log).
 
 ## [Unreleased]
 
+## 2026-07-23 — Code review pass: palette, boot cleanup, theming, meta tags
+
+- **Fixed command palette Enter/hover mismatch.** Hovering a result
+  highlighted it via `.selected`, but Enter always activated the
+  literal first DOM result regardless of what was highlighted. Now
+  tracks a single `paletteSelectedIndex` that both hover and Enter
+  read from.
+- **Added arrow-key navigation to the command palette** (Up/Down cycle
+  through results, wrapping at both ends, scrolling the active item
+  into view) — previously keyboard users could only reach the first
+  result.
+- **Boot sequence no longer leaks its typewriter interval.** Dismissing
+  it early (keypress/click) didn't `clearInterval`, so the message
+  typing kept running in the background for its full ~560ms regardless.
+- **Removed the now-redundant boot-close listeners.** The real bug
+  (see below) was a CSS specificity issue, not the event listeners —
+  once that was fixed, the earlier belt-and-suspenders attempt
+  (`document`/`window` keydown, `document`/button click, four
+  listeners total) was dead weight. Trimmed to one `document` keydown
+  and one `document` click, which cover the whole page including the
+  button.
+- **Themed the custom `>_` cursor.** It was hardcoded to the CRT
+  accent red regardless of theme — now switches to the PRINT accent
+  in light mode, matching every other themed color on the site.
+- **Added `type="button"` to the boot-skip button** — harmless today
+  with no `<form>` present, but defensive against future changes.
+- **Added Open Graph / Twitter Card meta tags + canonical link** —
+  this site had none, unlike Terra which already has them. No og:image
+  yet since there's no raster asset for one (favicon.svg is the only
+  image asset in `assets/img/`).
+
 ## 2026-07-23 — Boot screen fix, first project entries
 
 - **Fixed the boot sequence and command palette never closing.**

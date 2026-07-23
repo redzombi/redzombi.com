@@ -98,9 +98,8 @@
   /* ---------- boot sequence (first load only) ---------- */
   function showBootSequence() {
     const bootEl = document.getElementById("boot-sequence");
-    const bootText = bootEl.querySelector(".boot-text");
-    const bootButton = bootEl.querySelector(".boot-skip");
     if (!bootEl) return;
+    const bootText = bootEl.querySelector(".boot-text");
 
     const messages = [
       "redzombi.com [v0.1.0]",
@@ -125,19 +124,15 @@
     bootEl.hidden = false;
 
     const closeBoot = function () {
+      clearInterval(interval);
       bootEl.hidden = true;
       localStorage.setItem("redzombi-boot-skip", "true");
       document.removeEventListener("keydown", closeBoot);
       document.removeEventListener("click", closeBoot);
-      window.removeEventListener("keydown", closeBoot);
-      if (bootButton) bootButton.removeEventListener("click", closeBoot);
     };
 
-    // Multiple attach points to ensure it works
     document.addEventListener("keydown", closeBoot);
     document.addEventListener("click", closeBoot);
-    window.addEventListener("keydown", closeBoot);
-    if (bootButton) bootButton.addEventListener("click", closeBoot);
   }
 
   if (!localStorage.getItem("redzombi-boot-skip")) {
@@ -362,10 +357,21 @@
     if (paletteEl) paletteEl.hidden = true;
   }
 
+  let paletteResultData = [];
+  let paletteSelectedIndex = -1;
+
+  function renderPaletteSelection() {
+    document.querySelectorAll(".palette-item").forEach(function (el, i) {
+      const isSelected = i === paletteSelectedIndex;
+      el.classList.toggle("selected", isSelected);
+      if (isSelected) el.scrollIntoView({ block: "nearest" });
+    });
+  }
+
   function searchPalette(query) {
     query = query.toLowerCase();
 
-    let results = [];
+    paletteResultData = [];
 
     // search posts
     postIndex.forEach(function (p) {
@@ -373,7 +379,7 @@
         p.title.toLowerCase().includes(query) ||
         (Array.isArray(p.tags) && p.tags.some(function (t) { return t.toLowerCase().includes(query); }))
       ) {
-        results.push({
+        paletteResultData.push({
           type: "post",
           name: p.title,
           desc: "post",
@@ -385,7 +391,7 @@
     // search commands
     COMMANDS.forEach(function (cmd) {
       if (cmd.name.includes(query) || cmd.desc.includes(query)) {
-        results.push({
+        paletteResultData.push({
           type: "command",
           name: cmd.name,
           desc: cmd.desc,
@@ -394,7 +400,9 @@
       }
     });
 
-    paletteResults.innerHTML = results
+    paletteSelectedIndex = paletteResultData.length ? 0 : -1;
+
+    paletteResults.innerHTML = paletteResultData
       .map(function (r, i) {
         return (
           '<div class="palette-item ' + r.type + '" data-idx="' + i + '">' +
@@ -406,12 +414,14 @@
       .join("");
 
     document.querySelectorAll(".palette-item").forEach(function (item, i) {
-      item.addEventListener("click", function () { results[i].action(); });
+      item.addEventListener("click", function () { paletteResultData[i].action(); });
       item.addEventListener("mouseenter", function () {
-        document.querySelectorAll(".palette-item").forEach(function (el) { el.classList.remove("selected"); });
-        item.classList.add("selected");
+        paletteSelectedIndex = i;
+        renderPaletteSelection();
       });
     });
+
+    renderPaletteSelection();
   }
 
   function executeCommand(cmd) {
@@ -437,10 +447,23 @@
   if (paletteInput) {
     paletteInput.addEventListener("input", function () { searchPalette(paletteInput.value); });
     paletteInput.addEventListener("keydown", function (e) {
-      if (e.key === "Escape") closePalette();
-      if (e.key === "Enter") {
-        const first = paletteResults.querySelector(".palette-item");
-        if (first) first.click();
+      if (e.key === "Escape") {
+        closePalette();
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (paletteResultData.length) {
+          paletteSelectedIndex = (paletteSelectedIndex + 1) % paletteResultData.length;
+          renderPaletteSelection();
+        }
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (paletteResultData.length) {
+          paletteSelectedIndex = (paletteSelectedIndex - 1 + paletteResultData.length) % paletteResultData.length;
+          renderPaletteSelection();
+        }
+      } else if (e.key === "Enter") {
+        const active = paletteResultData[paletteSelectedIndex];
+        if (active) active.action();
       }
     });
   }

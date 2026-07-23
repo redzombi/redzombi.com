@@ -122,8 +122,16 @@ html[data-theme="print"] body::after { opacity: 0 !important; }
 a { color: var(--accent); }
 ::selection { background: var(--accent); color: var(--bg); }
 
-/* ---- hover: cursor becomes >_ ---- */
+/* ---- hover: cursor becomes >_ (themed to match accent color) ---- */
 a, button, .clickable { cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><text x="0" y="12" font-family="monospace" font-size="12" fill="%23ff5b4d">&gt;_</text></svg>') 0 12, auto; }
+html[data-theme="print"] a, html[data-theme="print"] button, html[data-theme="print"] .clickable {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><text x="0" y="12" font-family="monospace" font-size="12" fill="%23b32020">&gt;_</text></svg>') 0 12, auto;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) a, :root:not([data-theme]) button, :root:not([data-theme]) .clickable {
+    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><text x="0" y="12" font-family="monospace" font-size="12" fill="%23b32020">&gt;_</text></svg>') 0 12, auto;
+  }
+}
 
 .wrap { max-width: 900px; margin: 0 auto; padding: 0 24px; }
 
