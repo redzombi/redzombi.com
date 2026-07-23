@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "name": "Zombi Terra Command",
+    "status": "live",
+    "description": "Self-hosted signals-collection ground station. Live today: 1090MHz ADS-B and 978MHz UAT decode off a pair of RTL-SDR dongles, feeding a fast local tar1090 map and every major open-data aggregator, wrapped in an installable (PWA) command hub with health monitoring, uptime tracking, and emergency alerting. In progress (v1.5): expanding to a 9-SDR full aviation + marine signals hub — ACARS/VDL2, HFDL, AIS, DSC, and civil/military voice decode — plus Prometheus/Grafana dashboarding. Hardware ordered for the first wave, build-out not yet started.",
+    "url": "https://terra.redzombi.com",
+    "linkLabel": "open command hub →"
+  },
+  {
+    "name": "Zombi Orbit Command",
+    "status": "building",
+    "description": "Satellite-tracking ground station — the orbital companion to Zombi Terra Command's aviation/marine signals hub. Same command-hub philosophy, pointed at the sky: tracking passes and decoding satellite signals instead of aircraft and vessels. Early stages, no public hub yet."
+  }
+]
