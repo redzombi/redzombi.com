@@ -1,1 +1,16 @@
-[]
+[
+  {
+    "slug": "sentinel-network-oauth-2026",
+    "title": "Sentinel Network: OAuth 2.0 Security + Admin Dashboard",
+    "date": "2026-07-27",
+    "tags": ["sentinel-network", "security", "auth"],
+    "summary": "Zombi-Auth integration complete: full OAuth 2.0 + PKCE flow, a gated admin dashboard, and real-time monitoring across 15 edge nodes in the Terra, Orbital, and Spectrum clusters."
+  },
+  {
+    "slug": "adsb-feeder-optimization-2026",
+    "title": "ADSB Feeder System Optimization Deep Dive",
+    "date": "2026-07-27",
+    "tags": ["zombi-terra-command", "adsb", "performance"],
+    "summary": "A tune-up pass on the 15-node Pi cluster: type hints and fixed file-handle leaks in the Python stats collector, an accessibility and performance overhaul of the command hub UI, and DPI-aware Canvas rendering."
+  }
+]
