@@ -5,6 +5,28 @@ in `data/log.json` and is a different kind of log).
 
 ## [Unreleased]
 
+## 2026-07-28 — Live presence, guestbook admin cleanup
+
+- **Live presence indicator** in the header ("N souls here"): a 30-second
+  KV heartbeat per tab (`presence:<random-id>` keys with a 60s TTL —
+  Cloudflare KV's minimum), counted via `LAB_KV.list({ prefix: "presence:" })`.
+  Deliberately not a Durable Object: a real-time presence channel would be
+  more precise, but this reuses the KV namespace already provisioned, adds
+  no new Cloudflare resource or plan-tier dependency, and "approximately
+  live" is plenty for a fun header widget.
+- **Guestbook admin cleanup**: `DELETE /api/guestbook/<id>` removes a
+  single entry, gated behind a new `ADMIN_KEY` Worker secret (`x-admin-key`
+  header). Fails *closed* — no secret configured means every delete 401s,
+  unlike Turnstile's fail-open default (a missing delete-auth secret should
+  never mean "deletes are open to anyone"). Entries now carry a
+  `crypto.randomUUID()` `id` so a specific one can be targeted.
+- Cleared the guestbook's stored entries (the test transmissions from
+  today's earlier verification passes) via the new admin endpoint —
+  starts empty for real visitors now.
+- Set the `ADMIN_KEY` secret on the live Worker via `wrangler secret put`
+  and used it to confirm the delete flow end-to-end in production before
+  clearing real data with it.
+
 ## 2026-07-28 — Terminal easter eggs, signal meter, guestbook
 
 - **Command palette easter eggs**: `whoami`, `sudo`, `neofetch`, and

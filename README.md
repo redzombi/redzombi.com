@@ -81,9 +81,27 @@ the fun of it:
   minimum TTL). Turnstile needs `TURNSTILE_SECRET_KEY` set as a Worker
   secret — see Deploy. Without it, Turnstile verification is skipped
   (honeypot + rate limit still apply), so local dev doesn't need it
-  configured. No auth, no moderation UI — it's a personal-site guestbook,
-  not a production comment system; keep that in mind before linking it
-  anywhere with real traffic.
+  configured. Each entry gets a `crypto.randomUUID()` id so a bad one can
+  be pulled without hand-editing KV — see admin cleanup below. Still no
+  moderation *UI*, just an API; not a production comment system, keep
+  that in mind before linking it anywhere with real traffic.
+- **Guestbook admin cleanup** — `DELETE /api/guestbook/<id>` removes a
+  single entry, gated behind an `ADMIN_KEY` Worker secret compared against
+  the `x-admin-key` request header:
+
+  ```bash
+  curl -X DELETE https://redzombi.com/api/guestbook/<id> -H "x-admin-key: <ADMIN_KEY>"
+  ```
+
+  No secret configured means every request 401s (fails closed, unlike
+  Turnstile) — there's no safe "skip" behavior for a delete endpoint.
+- **Live presence** (header, next to the clock) — "N souls here" from a
+  30-second heartbeat: each tab POSTs a random per-tab id (`sessionStorage`)
+  to `/api/presence`, which refreshes a `presence:<id>` KV key with a 60s
+  TTL (KV's minimum) and returns how many haven't expired. Approximate by
+  design — not a real-time Durable Object presence channel, just a KV
+  heartbeat count — but far simpler and needs no new Cloudflare resources
+  or plan tier beyond what's already provisioned.
 
 ## Adding a log entry
 
@@ -153,7 +171,7 @@ version: Cloudflare runs `npx wrangler deploy` from the repo root on every
 push to `main`, which reads `wrangler.jsonc` and deploys `src/index.js`
 with `lab-site/` bound as static assets.
 
-Two manual, one-time steps: `wrangler.jsonc`'s `kv_namespaces` entry needs
-a real namespace ID before that deploy will succeed, and the guestbook's
-Turnstile check needs a `TURNSTILE_SECRET_KEY` Worker secret — see
-DEPLOY.md.
+Manual, one-time steps: `wrangler.jsonc`'s `kv_namespaces` entry needs a
+real namespace ID before that deploy will succeed, the guestbook's
+Turnstile check needs a `TURNSTILE_SECRET_KEY` Worker secret, and deleting
+guestbook entries needs an `ADMIN_KEY` Worker secret — see DEPLOY.md.

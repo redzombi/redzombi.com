@@ -73,6 +73,38 @@
   tickUptime();
   setInterval(tickUptime, 1000 * 60);
 
+  /* ---------- live presence ---------- */
+  function heartbeatPresence() {
+    const wrap = document.getElementById("presence-count");
+    const textEl = document.getElementById("presence-count-text");
+    if (!wrap || !textEl) return;
+
+    let sessionId = sessionStorage.getItem("presence-session-id");
+    if (!sessionId) {
+      sessionId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Math.random());
+      sessionStorage.setItem("presence-session-id", sessionId);
+    }
+
+    fetch("/api/presence", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ sessionId: sessionId }),
+    })
+      .then(function (res) { return res.ok ? res.json() : Promise.reject(res.status); })
+      .then(function (data) {
+        const count = typeof data.count === "number" ? data.count : 1;
+        textEl.textContent = count + (count === 1 ? " soul here" : " souls here");
+        wrap.hidden = false;
+      })
+      .catch(function () {
+        // presence is a bonus widget — fail quietly
+        wrap.hidden = true;
+      });
+  }
+
+  heartbeatPresence();
+  setInterval(heartbeatPresence, 30000);
+
   /* ---------- shared helpers ---------- */
   async function loadJSON(path) {
     try {

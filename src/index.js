@@ -11,6 +11,7 @@ const GUESTBOOK_MAX_ENTRIES = 50;
 const GUESTBOOK_MAX_MESSAGE = 280;
 const GUESTBOOK_MAX_NAME = 40;
 const GUESTBOOK_RATE_LIMIT_SECONDS = 60; // Cloudflare KV's minimum TTL
+const PRESENCE_TTL_SECONDS = 60; // Cloudflare KV's minimum TTL
 
 export default {
   async fetch(request, env) {
@@ -22,7 +23,12 @@ export default {
     const signalMatch = url.pathname.match(/^\/api\/signal\/([^/]+)\/?$/);
     if (signalMatch) return handleSignal(request, env, decodeURIComponent(signalMatch[1]));
 
+    const guestbookEntryMatch = url.pathname.match(/^\/api\/guestbook\/([^/]+)\/?$/);
+    if (guestbookEntryMatch) return handleGuestbookDelete(request, env, decodeURIComponent(guestbookEntryMatch[1]));
+
     if (url.pathname === "/api/guestbook") return handleGuestbook(request, env);
+
+    if (url.pathname === "/api/presence") return handlePresence(request, env);
 
     return env.ASSETS.fetch(request);
   },
@@ -132,6 +138,7 @@ async function handleGuestbook(request, env) {
 
     const entries = await readGuestbook(env);
     entries.unshift({
+      id: crypto.randomUUID(),
       name: name,
       message: message,
       date: new Date().toISOString().slice(0, 10),
@@ -143,6 +150,24 @@ async function handleGuestbook(request, env) {
   }
 
   return json({ error: "method not allowed" }, 405);
+}
+
+async function handleGuestbookDelete(request, env, id) {
+  if (request.method !== "DELETE") {
+    return json({ error: "method not allowed" }, 405);
+  }
+
+  // admin-only cleanup, e.g.: curl -X DELETE -H "x-admin-key: ..." /api/guestbook/<id>
+  const adminKey = request.headers.get("x-admin-key");
+  if (!env.ADMIN_KEY || adminKey !== env.ADMIN_KEY) {
+    return json({ error: "unauthorized" }, 401);
+  }
+
+  const entries = await readGuestbook(env);
+  const filtered = entries.filter((e) => e.id !== id);
+  await env.LAB_KV.put(GUESTBOOK_KEY, JSON.stringify(filtered));
+
+  return json({ entries: filtered });
 }
 
 async function verifyTurnstile(token, ip, env) {
@@ -168,6 +193,27 @@ async function verifyTurnstile(token, ip, env) {
   } catch (err) {
     return false;
   }
+}
+
+async function handlePresence(request, env) {
+  if (request.method !== "POST") {
+    return json({ error: "method not allowed" }, 405);
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch (err) {
+    body = {};
+  }
+
+  const sessionId = String(body.sessionId || "").slice(0, 100);
+  if (sessionId) {
+    await env.LAB_KV.put("presence:" + sessionId, "1", { expirationTtl: PRESENCE_TTL_SECONDS });
+  }
+
+  const list = await env.LAB_KV.list({ prefix: "presence:" });
+  return json({ count: list.keys.length });
 }
 
 async function readGuestbook(env) {

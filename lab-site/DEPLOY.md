@@ -54,7 +54,20 @@ never should be).
 If this isn't set, the guestbook still works — it just skips the Turnstile
 check and relies on the honeypot + rate limit alone (see `README.md`).
 
-## 4. Connect the repo in Cloudflare
+## 4. Set an admin key (one-time, needed to delete guestbook entries)
+
+```bash
+npx wrangler secret put ADMIN_KEY
+# paste any long random string when prompted — this is yours to invent,
+# not issued by Cloudflare
+```
+
+Unlike Turnstile, this one fails *closed*: with no `ADMIN_KEY` set, every
+`DELETE /api/guestbook/<id>` request 401s rather than silently allowing
+deletes. Use whatever value you set here as the `x-admin-key` header value
+when cleaning up an entry (see `README.md`).
+
+## 5. Connect the repo in Cloudflare
 
 1. Log into the Cloudflare dashboard.
 2. In the left sidebar: **Workers & Pages** → **Create** → **Workers**
@@ -75,7 +88,7 @@ check and relies on the honeypot + rate limit alone (see `README.md`).
 You'll get a `<worker-name>.<account>.workers.dev` URL immediately —
 that's live and usable right away, domain or not.
 
-## 5. Point your own domain at it (optional, whenever you're ready)
+## 6. Point your own domain at it (optional, whenever you're ready)
 
 1. In the Worker's project, go to **Settings** → **Domains & Routes** →
    **Add** → **Custom Domain**.
