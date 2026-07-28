@@ -279,7 +279,7 @@
         return (
           '<article class="post-item">' +
           "<time>" + escapeHTML(p.date) + "</time>" +
-          '<h3><a href="#post/' + escapeHTML(p.slug) + '">' + escapeHTML(p.title) + "</a></h3>" +
+          '<h3><a href="/post/' + escapeHTML(p.slug) + '">' + escapeHTML(p.title) + "</a></h3>" +
           "<p>" + escapeHTML(p.summary) + "</p>" +
           tags +
           "</article>"
@@ -310,6 +310,12 @@
       articleEl.innerHTML = "<p><em>Could not load this post.</em></p>";
     }
 
+    if (window.hljs) {
+      articleEl.querySelectorAll("pre code").forEach(function (block) {
+        window.hljs.highlightElement(block);
+      });
+    }
+
     if (listEl) listEl.hidden = true;
     if (emptyEl) emptyEl.hidden = true;
     detailEl.hidden = false;
@@ -321,17 +327,27 @@
     renderPostList();
   }
 
-  function routePosts() {
+  // legacy links from the old #post/<slug> hash router still float around
+  // (shared before the switch to real /post/<slug> URLs) — send them home.
+  function redirectLegacyHash() {
     const hash = window.location.hash.replace(/^#/, "");
     const match = hash.match(/^post\/(.+)$/);
+    if (match) {
+      window.location.replace("/post/" + match[1]);
+      return true;
+    }
+    return false;
+  }
+
+  function routePosts() {
+    if (redirectLegacyHash()) return;
+    const match = window.location.pathname.match(/^\/post\/([^/]+)\/?$/);
     if (match) {
       renderPostDetail(decodeURIComponent(match[1]));
     } else {
       showPostList();
     }
   }
-
-  window.addEventListener("hashchange", routePosts);
 
   /* ---------- command palette ---------- */
   const paletteEl = document.getElementById("palette");
@@ -383,7 +399,7 @@
           type: "post",
           name: p.title,
           desc: "post",
-          action: function () { window.location.hash = "post/" + p.slug; closePalette(); },
+          action: function () { window.location.href = "/post/" + p.slug; },
         });
       }
     });

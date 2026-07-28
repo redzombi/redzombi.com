@@ -5,6 +5,23 @@ in `data/log.json` and is a different kind of log).
 
 ## [Unreleased]
 
+## 2026-07-27 — Real post URLs, per-post social previews, syntax highlighting
+
+- **Replaced hash-based post routing (`#post/<slug>`) with real paths**
+  (`/post/<slug>`). Added `<base href="/">` so relative asset/data URLs keep
+  resolving correctly from a `/post/...` path. Old hash links redirect to
+  the new URL client-side.
+- **Added a Cloudflare Pages Function** (`functions/post/[slug].js`) that
+  intercepts `/post/<slug>` at the edge and rewrites the `<title>`/OG/Twitter
+  meta tags to match that post before the HTML reaches a crawler — shared
+  links now preview with the actual post title and summary instead of the
+  generic homepage blurb. No build step or config needed; Pages auto-detects
+  `functions/`.
+- **Added syntax highlighting** for fenced code blocks in posts via
+  `highlight.js` (CDN, same low-friction pattern as `marked.js`). Styled
+  with the site's own CSS variables instead of a stock theme, so it follows
+  CRT/PRINT automatically.
+
 ## 2026-07-23 — Code review pass: palette, boot cleanup, theming, meta tags
 
 - **Fixed command palette Enter/hover mismatch.** Hovering a result

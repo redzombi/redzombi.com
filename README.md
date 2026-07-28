@@ -15,7 +15,7 @@ Google Fonts `@import` in the stylesheet.
 
 ## Structure
 
-```
+```text
 index.html                   the whole page (header, hero, log, posts, projects)
 assets/
   css/style.css               design tokens + layout (CRT/PRINT themes live here)
@@ -31,6 +31,10 @@ data/
 posts/
   <slug>.md                   markdown body for each posts.json entry
   README.md                   posts authoring convention
+functions/
+  post/[slug].js               Cloudflare Pages Function: injects per-post
+                                title/OG/Twitter tags at the edge so shared
+                                links preview correctly (see below)
 README.md                     this file
 DEPLOY.md                     Cloudflare Pages connection steps
 CHANGELOG.md                  dev log for the site itself (not the /log — see below)
@@ -49,8 +53,13 @@ Newest first, automatically.
 2. Drop a matching `posts/<slug>.md` file with the post body (plain markdown,
    start with an `# H1` title, no frontmatter needed).
 
-Posts render at `#post/<slug>` — no server routing required, it's all
-client-side hash navigation.
+Posts render at `/post/<slug>`. A Cloudflare Pages Function
+(`functions/post/[slug].js`) intercepts that path at the edge, looks up the
+post in `data/posts.json`, and rewrites the page's `<title>`/OG/Twitter tags
+to match before the client-side JS takes over and renders the body — so
+shared links preview with the real title and summary instead of the
+homepage's. No routing config needed beyond that file; Cloudflare Pages
+auto-detects anything under `functions/`.
 
 ## Adding a project
 

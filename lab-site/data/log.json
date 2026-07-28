@@ -1,1 +1,8 @@
-[]
+[
+  {
+    "date": "2026-07-27",
+    "body": "Published the Sentinel Network OAuth and ADSB feeder writeups, then noticed shared post links were previewing as the generic homepage. Swapped the hash router (#post/slug) for real /post/slug URLs with a Cloudflare Function injecting per-post title/OG tags at the edge. Also wired up syntax highlighting for code blocks.",
+    "tag": "meta"
+  }
+]
+
