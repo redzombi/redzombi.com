@@ -5,12 +5,8 @@ in `data/log.json` and is a different kind of log).
 
 ## [Unreleased]
 
-## 2026-07-28 — Live Terra Command feed, terminal easter eggs, signal meter, guestbook
+## 2026-07-28 — Terminal easter eggs, signal meter, guestbook
 
-- **Live Terra Command feed** in the hero: client-side fetch straight to
-  `terra.redzombi.com/data/aircraft.json` (tar1090's public, CORS-open
-  endpoint). Shows aircraft in range and messages decoded, polls every 30s,
-  hides itself quietly if the feeder's unreachable.
 - **Command palette easter eggs**: `whoami`, `sudo`, `neofetch`, and
   `cat log.json`, rendered inline in the palette instead of `alert()`.
   Added a Konami code (↑↑↓↓←→←→BA) triggering a matrix-rain canvas effect.
@@ -24,6 +20,12 @@ in `data/log.json` and is a different kind of log).
 - Added a `LAB_KV` namespace binding to `wrangler.jsonc` backing the two
   features above — needs a real namespace ID before deploy; see
   `lab-site/DEPLOY.md`.
+- **Reverted a live Terra Command hero widget** (client-side fetch to
+  `terra.redzombi.com/data/aircraft.json`) shipped earlier the same day —
+  that hub isn't public yet and is about to be replaced, so nothing should
+  link to it. Also dropped the `url`/`linkLabel` on the Zombi Terra Command
+  project card in `data/projects.json` for the same reason; re-add both
+  once the new hub is actually ready to be public.
 
 ## 2026-07-27 — Real post URLs, per-post social previews, syntax highlighting
 

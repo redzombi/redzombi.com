@@ -200,10 +200,6 @@ html[data-theme="print"] .hero h1 { text-shadow: none; }
   font-size: 12px; color: var(--text-muted);
 }
 .status-line .led { width: 7px; height: 7px; border-radius: 50%; background: var(--accent2); box-shadow: 0 0 6px var(--accent2); }
-.terra-status { margin-top: 6px; }
-.terra-status a { color: inherit; text-decoration: underline; }
-.terra-status .led-live { background: var(--accent); box-shadow: 0 0 6px var(--accent); animation: livePulse 2s ease-in-out infinite; }
-@keyframes livePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 
 /* ---- sections ---- */
 section.block { padding: 44px 0; border-bottom: 2px solid var(--border); }

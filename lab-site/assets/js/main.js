@@ -787,38 +787,6 @@
       : "STATUS: EMPTY · nothing published yet";
   }
 
-  /* ---------- live Terra Command feed ---------- */
-  function formatCount(n) {
-    if (n >= 1e6) return (n / 1e6).toFixed(1) + "M";
-    if (n >= 1e3) return (n / 1e3).toFixed(1) + "k";
-    return String(n);
-  }
-
-  function updateTerraStatus() {
-    const wrap = document.getElementById("terra-status");
-    const textEl = document.getElementById("terra-status-text");
-    if (!wrap || !textEl) return;
-
-    fetch("https://terra.redzombi.com/data/aircraft.json", { cache: "no-store" })
-      .then(function (res) { return res.ok ? res.json() : Promise.reject(res.status); })
-      .then(function (data) {
-        const aircraft = Array.isArray(data.aircraft) ? data.aircraft.length : 0;
-        const messages = typeof data.messages === "number" ? data.messages : 0;
-        textEl.innerHTML =
-          "LIVE: " + aircraft + " aircraft in range &middot; " +
-          formatCount(messages) + " messages decoded &middot; " +
-          '<a href="https://terra.redzombi.com" target="_blank" rel="noopener">terra.redzombi.com &rarr;</a>';
-        wrap.hidden = false;
-      })
-      .catch(function () {
-        // feeder's offline or unreachable — fail quietly, this is a bonus widget
-        wrap.hidden = true;
-      });
-  }
-
-  updateTerraStatus();
-  setInterval(updateTerraStatus, 30000);
-
   /* ---------- boot ---------- */
   Promise.all([
     loadJSON("data/log.json"),

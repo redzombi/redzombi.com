@@ -64,11 +64,6 @@ README.md                     this file
 A few things layered on top of the log/posts/projects model, mostly for
 the fun of it:
 
-- **Live Terra Command feed** (hero section) — a client-side fetch straight
-  to `terra.redzombi.com/data/aircraft.json` (tar1090's own public,
-  CORS-open endpoint — no proxy needed). Shows current aircraft count and
-  total messages decoded. Fails silently and hides itself if the feeder's
-  offline; see `updateTerraStatus()` in `assets/js/main.js`.
 - **Command palette easter eggs** (`/` to open) — `whoami`, `sudo`,
   `neofetch`, and `cat log.json` alongside the real `help`/`uptime`
   commands, rendered inline in the palette instead of a native `alert()`.
