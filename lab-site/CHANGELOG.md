@@ -11,22 +11,22 @@ in `data/log.json` and is a different kind of log).
   (`/post/<slug>`). Added `<base href="/">` so relative asset/data URLs keep
   resolving correctly from a `/post/...` path. Old hash links redirect to
   the new URL client-side.
-- **Added a Cloudflare Pages Function** (`functions/post/[slug].js`) that
-  intercepts `/post/<slug>` at the edge and rewrites the `<title>`/OG/Twitter
-  meta tags to match that post before the HTML reaches a crawler — shared
-  links now preview with the actual post title and summary instead of the
-  generic homepage blurb. No build step or config needed; Pages auto-detects
-  `functions/`.
+- **Added `src/index.js`, a Cloudflare Worker**, plus a committed
+  `wrangler.jsonc` at the repo root. `/post/<slug>` has no matching static
+  file, so it falls through to the Worker, which looks up the post and
+  rewrites the `<title>`/OG/Twitter tags before the HTML reaches a
+  crawler — shared links now preview with the real post title and summary
+  instead of the generic homepage blurb. Every other path is served
+  directly from `lab-site/` and never touches the Worker.
+  (Two false starts before this: first as a Cloudflare Pages Function,
+  which doesn't apply here since this project deploys as a git-connected
+  Worker running `npx wrangler deploy`, not classic Pages; then in the
+  wrong directory. See `README.md` and `DEPLOY.md` for the actual deploy
+  model.)
 - **Added syntax highlighting** for fenced code blocks in posts via
   `highlight.js` (CDN, same low-friction pattern as `marked.js`). Styled
   with the site's own CSS variables instead of a stock theme, so it follows
   CRT/PRINT automatically.
-- **Fix:** the Function above initially landed at `lab-site/functions/`
-  and 404'd in production — Cloudflare looks for `functions/` relative to
-  the project's *root directory* (the repo root), a separate setting from
-  *build output directory* (`lab-site`, what's actually served). Moved it
-  to `functions/` at the true repo root, sibling to `lab-site/`. See the
-  note in the root `README.md`.
 
 ## 2026-07-23 — Code review pass: palette, boot cleanup, theming, meta tags
 

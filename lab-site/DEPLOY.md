@@ -1,12 +1,13 @@
-# Deploying to Cloudflare Pages
+# Deploying to Cloudflare
 
-This is a static site with no build step, so the Cloudflare Pages setup is
-about as simple as it gets.
+This deploys as a Cloudflare Worker with static assets, not classic
+Cloudflare Pages — the difference matters because it's what lets
+`src/index.js` run at all (Pages' `functions/` directory convention
+doesn't apply here; see the root `README.md`).
 
 ## 1. Push this to a GitHub (or GitLab) repo
 
 ```bash
-cd lab-site
 git init
 git add .
 git commit -m "Initial scaffold"
@@ -15,31 +16,31 @@ git remote add origin https://github.com/<your-username>/<repo-name>.git
 git push -u origin main
 ```
 
-(Create the empty repo on GitHub first, without a README/license, so
-there's nothing to conflict with the initial push.)
-
 ## 2. Connect the repo in Cloudflare
 
 1. Log into the Cloudflare dashboard.
-2. In the left sidebar: **Workers & Pages** → **Create** → **Pages** tab →
-   **Connect to Git**.
+2. In the left sidebar: **Workers & Pages** → **Create** → **Workers**
+   tab → **Connect to Git** (not the Pages tab — this needs to be a
+   git-connected Worker, so `npx wrangler deploy` runs on every push).
 3. Authorize Cloudflare's GitHub app if you haven't already, and pick this
    repo.
-4. Build settings — this is the part that trips people up on a no-build
-   site, so set it exactly like this:
-   - **Framework preset:** None
-   - **Build command:** *(leave blank)*
-   - **Build output directory:** `lab-site` (the site lives in this
-     subdirectory of the repo, not the repo root)
+4. Build settings:
+   - **Deploy command:** `npx wrangler deploy`
+   - **Build command:** *(leave blank — nothing to build)*
+   - Everything else (Worker name, entry point, assets directory) comes
+     from the committed `wrangler.jsonc` at the repo root. Don't rely on
+     Cloudflare's auto-detected settings — without a committed config it
+     re-guesses these on every build and silently ignores anything (like
+     `src/index.js`) it doesn't already know how to wire up.
 5. Click **Save and Deploy**. First deploy takes under a minute.
 
-You'll get a `<project-name>.pages.dev` URL immediately — that's live and
-usable right away, domain or not.
+You'll get a `<worker-name>.<account>.workers.dev` URL immediately —
+that's live and usable right away, domain or not.
 
 ## 3. Point your own domain at it (optional, whenever you're ready)
 
-1. In the Pages project, go to **Custom domains** → **Set up a custom
-   domain**.
+1. In the Worker's project, go to **Settings** → **Domains & Routes** →
+   **Add** → **Custom Domain**.
 2. Enter the domain or subdomain you want (e.g. `lab.yourdomain.com`).
 3. If the domain's DNS is already on Cloudflare, it'll offer to add the
    CNAME automatically — accept it.
@@ -54,8 +55,26 @@ Every push to `main` auto-deploys. Cloudflare also builds a preview URL
 for any other branch or PR, so you can stage changes (a new module, a
 redesign pass) on a branch and check the preview link before merging.
 
+## Verifying a deploy actually picked up your changes
+
+Since there's no build step, a broken deploy usually means Cloudflare
+silently used stale or auto-detected settings instead of the committed
+config — not a build failure. After pushing, check the deployment's build
+log (Cloudflare dashboard → the Worker → **Deployments** → latest entry)
+for a line like:
+
+```text
+Executing user deploy command: npx wrangler deploy
+```
+
+If instead you see Wrangler asking about a `functions` directory or
+printing "Detected Project Settings" before writing its own
+`wrangler.jsonc`, the committed one isn't being picked up — the deploy
+command or root directory in the dashboard settings doesn't match what's
+described here.
+
 ## Rollbacks
 
-Pages keeps every deployment. If a push breaks something: Pages project →
-**Deployments** → find the last good one → **Rollback to this
-deployment**. No git revert needed for a quick fix.
+Cloudflare keeps every deployment. If a push breaks something: the
+Worker's project → **Deployments** → find the last good one →
+**Rollback to this deployment**. No git revert needed for a quick fix.

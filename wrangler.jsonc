@@ -1,0 +1,9 @@
+{
+  "name": "redzombi",
+  "main": "src/index.js",
+  "compatibility_date": "2026-07-28",
+  "assets": {
+    "directory": "lab-site",
+    "binding": "ASSETS"
+  }
+}
