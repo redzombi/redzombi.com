@@ -16,28 +16,37 @@ Google Fonts `@import` in the stylesheet.
 ## Structure
 
 ```text
-index.html                   the whole page (header, hero, log, posts, projects)
-assets/
-  css/style.css               design tokens + layout (CRT/PRINT themes live here)
-  js/main.js                  theme toggle, clock, renders the three feeds
-  img/favicon.svg
-data/
-  log.json                    real log entries — starts empty
-  log.example.json            schema reference, not loaded by the site
-  posts.json                  real post index — starts empty
-  posts.example.json          schema reference, not loaded by the site
-  projects.json                real project entries — starts empty
-  projects.example.json        schema reference, not loaded by the site
-posts/
-  <slug>.md                   markdown body for each posts.json entry
-  README.md                   posts authoring convention
+lab-site/                     Cloudflare Pages build output directory — the
+                               actual deployed site
+  index.html                  the whole page (header, hero, log, posts, projects)
+  assets/
+    css/style.css              design tokens + layout (CRT/PRINT themes live here)
+    js/main.js                 theme toggle, clock, renders the three feeds
+    img/favicon.svg
+  data/
+    log.json                   real log entries — starts empty
+    log.example.json           schema reference, not loaded by the site
+    posts.json                 real post index — starts empty
+    posts.example.json         schema reference, not loaded by the site
+    projects.json               real project entries — starts empty
+    projects.example.json       schema reference, not loaded by the site
+  posts/
+    <slug>.md                  markdown body for each posts.json entry
+    README.md                  posts authoring convention
+  DEPLOY.md                    Cloudflare Pages connection steps
+  CHANGELOG.md                 dev log for the site itself (not the /log — see below)
 functions/
   post/[slug].js               Cloudflare Pages Function: injects per-post
                                 title/OG/Twitter tags at the edge so shared
-                                links preview correctly (see below)
+                                links preview correctly (see below). MUST live
+                                here, at the repo root — Cloudflare finds
+                                `functions/` relative to the project's *root
+                                directory* (repo root, unchanged), which is a
+                                separate setting from *build output directory*
+                                (`lab-site`, what actually gets served). A
+                                `lab-site/functions/` is invisible to Pages
+                                and silently 404s.
 README.md                     this file
-DEPLOY.md                     Cloudflare Pages connection steps
-CHANGELOG.md                  dev log for the site itself (not the /log — see below)
 ```
 
 ## Adding a log entry
@@ -54,12 +63,13 @@ Newest first, automatically.
    start with an `# H1` title, no frontmatter needed).
 
 Posts render at `/post/<slug>`. A Cloudflare Pages Function
-(`functions/post/[slug].js`) intercepts that path at the edge, looks up the
-post in `data/posts.json`, and rewrites the page's `<title>`/OG/Twitter tags
-to match before the client-side JS takes over and renders the body — so
-shared links preview with the real title and summary instead of the
+(`functions/post/[slug].js`, at the **repo root**, not inside `lab-site/` —
+see the note in Structure above) intercepts that path at the edge, looks up
+the post in `data/posts.json`, and rewrites the page's `<title>`/OG/Twitter
+tags to match before the client-side JS takes over and renders the body —
+so shared links preview with the real title and summary instead of the
 homepage's. No routing config needed beyond that file; Cloudflare Pages
-auto-detects anything under `functions/`.
+auto-detects anything under the root-level `functions/`.
 
 ## Adding a project
 

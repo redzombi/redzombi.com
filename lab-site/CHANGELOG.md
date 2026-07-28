@@ -21,6 +21,12 @@ in `data/log.json` and is a different kind of log).
   `highlight.js` (CDN, same low-friction pattern as `marked.js`). Styled
   with the site's own CSS variables instead of a stock theme, so it follows
   CRT/PRINT automatically.
+- **Fix:** the Function above initially landed at `lab-site/functions/`
+  and 404'd in production — Cloudflare looks for `functions/` relative to
+  the project's *root directory* (the repo root), a separate setting from
+  *build output directory* (`lab-site`, what's actually served). Moved it
+  to `functions/` at the true repo root, sibling to `lab-site/`. See the
+  note in the root `README.md`.
 
 ## 2026-07-23 — Code review pass: palette, boot cleanup, theming, meta tags
 
