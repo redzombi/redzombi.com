@@ -74,11 +74,16 @@ the fun of it:
   increment per browser session per post (`sessionStorage`-deduped), via
   `POST /api/signal/<slug>`.
 - **Guestbook** — a KV-backed public form (name optional, message
-  required, 280 chars). Basic anti-abuse: a hidden honeypot field, and a
-  60-second per-IP cooldown (Cloudflare KV's own minimum TTL) via
-  `POST /api/guestbook`. No auth, no moderation UI — it's a personal-site
-  guestbook, not a production comment system; keep that in mind before
-  linking it anywhere with real traffic.
+  required, 280 chars) via `POST /api/guestbook`. Anti-abuse, cheapest
+  check first: a hidden honeypot field, then Cloudflare Turnstile
+  (verified server-side against `siteverify`, see `verifyTurnstile()` in
+  `src/index.js`), then a 60-second per-IP cooldown (Cloudflare KV's own
+  minimum TTL). Turnstile needs `TURNSTILE_SECRET_KEY` set as a Worker
+  secret — see Deploy. Without it, Turnstile verification is skipped
+  (honeypot + rate limit still apply), so local dev doesn't need it
+  configured. No auth, no moderation UI — it's a personal-site guestbook,
+  not a production comment system; keep that in mind before linking it
+  anywhere with real traffic.
 
 ## Adding a log entry
 
@@ -148,5 +153,7 @@ version: Cloudflare runs `npx wrangler deploy` from the repo root on every
 push to `main`, which reads `wrangler.jsonc` and deploys `src/index.js`
 with `lab-site/` bound as static assets.
 
-One manual, one-time step: `wrangler.jsonc`'s `kv_namespaces` entry needs a
-real namespace ID before that deploy will succeed — see DEPLOY.md.
+Two manual, one-time steps: `wrangler.jsonc`'s `kv_namespaces` entry needs
+a real namespace ID before that deploy will succeed, and the guestbook's
+Turnstile check needs a `TURNSTILE_SECRET_KEY` Worker secret — see
+DEPLOY.md.

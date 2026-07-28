@@ -14,9 +14,15 @@ in `data/log.json` and is a different kind of log).
   bars instead of a plain number. One increment per session per post.
   New routes: `GET`/`POST /api/signal/<slug>`.
 - **Guestbook**: a KV-backed public form on the homepage (name optional,
-  message required). Honeypot field plus a 60s per-IP cooldown for basic
-  abuse resistance — no auth or moderation UI, it's a toy, not a comment
-  system. New routes: `GET`/`POST /api/guestbook`.
+  message required). Anti-abuse layers, cheapest first: a honeypot field,
+  then Cloudflare Turnstile (verified server-side against `siteverify`),
+  then a 60s per-IP cooldown. No auth or moderation UI — it's a toy, not a
+  comment system. New routes: `GET`/`POST /api/guestbook`.
+- Added a `TURNSTILE_SECRET_KEY` Worker secret (not committed — set via
+  `wrangler secret put`) backing the guestbook's captcha check. Verified
+  the rejection path against Cloudflare's real `siteverify` endpoint with
+  a bogus token before shipping; skips verification entirely if the secret
+  isn't set, so local dev doesn't need it configured.
 - Added a `LAB_KV` namespace binding to `wrangler.jsonc` backing the two
   features above — needs a real namespace ID before deploy; see
   `lab-site/DEPLOY.md`.

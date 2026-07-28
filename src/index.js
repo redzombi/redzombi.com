@@ -118,6 +118,12 @@ async function handleGuestbook(request, env) {
     }
 
     const ip = request.headers.get("cf-connecting-ip") || "unknown";
+
+    const turnstileOk = await verifyTurnstile(body.turnstileToken, ip, env);
+    if (!turnstileOk) {
+      return json({ error: "captcha check failed — try again" }, 403);
+    }
+
     const rateLimitKey = "guestbook:rate:" + ip;
     if (await env.LAB_KV.get(rateLimitKey)) {
       return json({ error: "slow down — try again in a bit" }, 429);
@@ -137,6 +143,31 @@ async function handleGuestbook(request, env) {
   }
 
   return json({ error: "method not allowed" }, 405);
+}
+
+async function verifyTurnstile(token, ip, env) {
+  // TURNSTILE_SECRET_KEY is a Worker secret (wrangler secret put), never
+  // committed. If it's not set (e.g. local dev), skip verification rather
+  // than hard-failing every submission — the honeypot + rate limit still
+  // apply either way.
+  if (!env.TURNSTILE_SECRET_KEY) return true;
+  if (!token) return false;
+
+  const body = new URLSearchParams();
+  body.append("secret", env.TURNSTILE_SECRET_KEY);
+  body.append("response", token);
+  if (ip) body.append("remoteip", ip);
+
+  try {
+    const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      body: body,
+    });
+    const data = await res.json();
+    return data.success === true;
+  } catch (err) {
+    return false;
+  }
 }
 
 async function readGuestbook(env) {

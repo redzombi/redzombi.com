@@ -32,7 +32,29 @@ root's `wrangler.jsonc`, replacing `REPLACE_WITH_KV_NAMESPACE_ID`, commit,
 and push. (Equivalent dashboard path: **Workers & Pages** → **KV** →
 **Create a namespace** — copy the Namespace ID it gives you.)
 
-## 3. Connect the repo in Cloudflare
+## 3. Set the Turnstile secret (one-time, needed for the guestbook captcha)
+
+The guestbook's Cloudflare Turnstile check needs a secret key at runtime —
+this one must NOT go in `wrangler.jsonc` (that's committed to git; secrets
+never should be).
+
+1. Create a Turnstile widget: Cloudflare dashboard → **Turnstile** →
+   **Add site**. This gives you a **Site Key** (public — already in
+   `lab-site/index.html`'s `data-sitekey`) and a **Secret Key**.
+2. Set the secret key as a Worker secret:
+
+   ```bash
+   npx wrangler secret put TURNSTILE_SECRET_KEY
+   # paste the Secret Key when prompted
+   ```
+
+   (Equivalent dashboard path: the Worker → **Settings** → **Variables and
+   Secrets** → **Add** → type **Secret**, name `TURNSTILE_SECRET_KEY`.)
+
+If this isn't set, the guestbook still works — it just skips the Turnstile
+check and relies on the honeypot + rate limit alone (see `README.md`).
+
+## 4. Connect the repo in Cloudflare
 
 1. Log into the Cloudflare dashboard.
 2. In the left sidebar: **Workers & Pages** → **Create** → **Workers**
@@ -53,7 +75,7 @@ and push. (Equivalent dashboard path: **Workers & Pages** → **KV** →
 You'll get a `<worker-name>.<account>.workers.dev` URL immediately —
 that's live and usable right away, domain or not.
 
-## 4. Point your own domain at it (optional, whenever you're ready)
+## 5. Point your own domain at it (optional, whenever you're ready)
 
 1. In the Worker's project, go to **Settings** → **Domains & Routes** →
    **Add** → **Custom Domain**.

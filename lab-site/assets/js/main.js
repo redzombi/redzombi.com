@@ -270,6 +270,7 @@
       const nameEl = document.getElementById("guestbook-name");
       const messageEl = document.getElementById("guestbook-message");
       const websiteEl = document.getElementById("guestbook-website");
+      const turnstileEl = document.getElementsByName("cf-turnstile-response")[0];
       const message = messageEl ? messageEl.value.trim() : "";
       if (!message) return;
 
@@ -282,10 +283,12 @@
           name: nameEl ? nameEl.value.trim() : "",
           message: message,
           website: websiteEl ? websiteEl.value : "",
+          turnstileToken: turnstileEl ? turnstileEl.value : "",
         }),
       })
         .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
         .then(function (result) {
+          if (window.turnstile) window.turnstile.reset();
           if (!result.ok) {
             setGuestbookStatus(result.data.error || "something went wrong", true);
             return;
@@ -295,7 +298,10 @@
           setGuestbookStatus("sent.", false);
           setTimeout(function () { setGuestbookStatus("", false); }, 2500);
         })
-        .catch(function () { setGuestbookStatus("couldn't reach the server — try again", true); });
+        .catch(function () {
+          if (window.turnstile) window.turnstile.reset();
+          setGuestbookStatus("couldn't reach the server — try again", true);
+        });
     });
   }
 
