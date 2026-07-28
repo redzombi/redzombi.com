@@ -18,11 +18,13 @@ in `data/log.json` and is a different kind of log).
   then Cloudflare Turnstile (verified server-side against `siteverify`),
   then a 60s per-IP cooldown. No auth or moderation UI — it's a toy, not a
   comment system. New routes: `GET`/`POST /api/guestbook`.
-- Added a `TURNSTILE_SECRET_KEY` Worker secret (not committed — set via
-  `wrangler secret put`) backing the guestbook's captcha check. Verified
-  the rejection path against Cloudflare's real `siteverify` endpoint with
-  a bogus token before shipping; skips verification entirely if the secret
-  isn't set, so local dev doesn't need it configured.
+- Verified the Turnstile rejection path against Cloudflare's real
+  `siteverify` endpoint with a bogus token before shipping the code (skips
+  verification entirely if `TURNSTILE_SECRET_KEY` isn't set, so local dev
+  needs no extra config). Then set that secret on the live Worker via
+  `wrangler secret put` (not committed — secrets never are) and confirmed
+  in production that a forged token now gets a real 403 instead of
+  sailing through.
 - Added a `LAB_KV` namespace binding to `wrangler.jsonc` backing the two
   features above — needs a real namespace ID before deploy; see
   `lab-site/DEPLOY.md`.
