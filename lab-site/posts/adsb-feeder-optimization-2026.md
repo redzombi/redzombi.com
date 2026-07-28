@@ -1,18 +1,25 @@
 # ADSB Feeder System Optimization Deep Dive
 
-**The 15-node Pi cluster just got a major tune-up.** Type hints, accessibility, performance gains, and DPI-aware Canvas rendering. Here's what changed under the hood.
+**The 15-node Pi cluster just got a major tune-up.** Type hints,
+accessibility, performance gains, and DPI-aware Canvas rendering. Here's
+what changed under the hood.
 
 ## 🐍 Python: Resource Management & Type Hints
 
-The `collect_stats.py` cron job was leaking file handles like a sieve and giving IDE autocomplete the silent treatment.
+The `collect_stats.py` cron job was leaking file handles like a sieve and
+giving IDE autocomplete the silent treatment.
 
 **What we fixed:**
 
-- **3 file handle leaks** squashed with proper context managers (lines 48, 92, 156)
-- **11 function type hints** added (`collect_system_status() → Dict[str, Any]` and friends)
-- **PEP 8 compliance** — imports split across multiple lines like they should be
+- **3 file handle leaks** squashed with proper context managers
+  (lines 48, 92, 156)
+- **11 function type hints** added (`collect_system_status() → Dict[str, Any]`
+  and friends)
+- **PEP 8 compliance** — imports split across multiple lines like they
+  should be
 
-**The win:** 5-10% memory improvement, 100% IDE support, better maintainability across the cluster.
+**The win:** 5-10% memory improvement, 100% IDE support, better
+maintainability across the cluster.
 
 ## 🎨 HTML/JavaScript: Accessibility & Performance Overhaul
 
@@ -27,22 +34,26 @@ The `collect_stats.py` cron job was leaking file handles like a sieve and giving
 
 ### Performance 🚀
 
-- Converted inline `onclick` handlers → event listeners (better encapsulation, fewer globals)
+- Converted inline `onclick` handlers → event listeners (better
+  encapsulation, fewer globals)
 - Proper error handling for Canvas initialization
 - Added `defer` attribute to script tags
 
 ### Mobile & Retina 📱
 
 - Responsive design with `@media (max-width: 768px)`
-- DPI-aware Canvas rendering using `window.devicePixelRatio` (Retina displays are crisp now)
+- DPI-aware Canvas rendering using `window.devicePixelRatio` (Retina
+  displays are crisp now)
 - Accessible touch targets
 - Single-column layout on small screens
 
-**The numbers:** 15-20% JS overhead reduction, WCAG 2.1 Level A compliance, sharp rendering on any display.
+**The numbers:** 15-20% JS overhead reduction, WCAG 2.1 Level A compliance,
+sharp rendering on any display.
 
 ## 🐳 Docker: Precision & Documentation
 
-- Altitude precision refined: **10.7 → 10.668** (exact 35ft conversion, not approximation)
+- Altitude precision refined: **10.7 → 10.668** (exact 35ft conversion,
+  not approximation)
 - Comprehensive deployment guide covering every step
 - Verification procedures & rollback playbooks
 
@@ -58,6 +69,10 @@ The `collect_stats.py` cron job was leaking file handles like a sieve and giving
 
 ## 🚀 What's Live Now
 
-All changes deployed to the main Terra Command hub. **100% backward compatible** — no breaking changes, just improvements. The 15-node cluster is running leaner and meaner.
+All changes deployed to the main Terra Command hub. **100% backward
+compatible** — no breaking changes, just improvements. The 15-node cluster
+is running leaner and meaner.
 
-**Next wave:** Expanding to a 9-SDR full aviation + marine signals hub (v1.5) with ACARS/VDL2, HFDL, AIS, DSC, and civil/military voice decode. Prometheus/Grafana dashboarding coming. Hardware's already ordered.
+**Next wave:** Expanding to a 9-SDR full aviation + marine signals hub
+(v1.5) with ACARS/VDL2, HFDL, AIS, DSC, and civil/military voice decode.
+Prometheus/Grafana dashboarding coming. Hardware's already ordered.

@@ -1,34 +1,39 @@
 # Sentinel Network: OAuth 2.0 Security + Admin Dashboard
 
-**Zombi-Auth integration complete.** The Sentinel Network now has production-grade OAuth 2.0 with PKCE protection, a secure login flow, and a gated admin dashboard monitoring 15 edge nodes across three geographic clusters.
+**Zombi-Auth integration complete.** The Sentinel Network now has
+production-grade OAuth 2.0 with PKCE protection, a secure login flow, and
+a gated admin dashboard monitoring 15 edge nodes across three geographic
+clusters.
 
 ## 🔓 The Authentication Story
 
-Sentinel Network manages critical infrastructure across **Terra, Orbital, and Spectrum** arrays — you can't just let anyone in. We built a complete OAuth 2.0 PKCE flow backed by Zombi-Auth.
+Sentinel Network manages critical infrastructure across **Terra, Orbital,
+and Spectrum** arrays — you can't just let anyone in. We built a complete
+OAuth 2.0 PKCE flow backed by Zombi-Auth.
 
 ### What We Deployed
 
-**oidc-client.js** (300+ lines)
+#### oidc-client.js (300+ lines)
 
 - Full OAuth 2.0 Authorization Code Flow + PKCE (RFC 7636)
 - Token refresh logic with automatic expiration handling
 - Secure code challenge generation & verification
 - State parameter protection against CSRF
 
-**login.html**
+#### login.html
 
 - Clean, professional OAuth consent page
 - "Connecting to Zombi-Auth..." status messaging
 - Client-side redirect handling (no server needed)
 
-**callback.html**
+#### callback.html
 
 - Authorization code exchange in ~50ms
 - Automatic token storage in secure session storage
 - Redirect to dashboard on success
 - Error handling with user-friendly messages
 
-**deployment-dashboard.html** (1350+ lines)
+#### deployment-dashboard.html (1350+ lines)
 
 - Auth gate: Checks for valid token before rendering anything
 - Bearer token injection into API requests
@@ -37,7 +42,8 @@ Sentinel Network manages critical infrastructure across **Terra, Orbital, and Sp
 
 ### Security Details 🔒
 
-- **PKCE Protection:** Authorization code can't be stolen without the code verifier
+- **PKCE Protection:** Authorization code can't be stolen without the
+  code verifier
 - **Token TTL:** 1 hour access token, 7-day refresh token
 - **State Validation:** CSRF protection built in
 - **Secure Storage:** Tokens in `sessionStorage` (cleared on browser close)
@@ -68,7 +74,8 @@ All protected by OAuth 2.0. No token = no access.
 - Error recovery (network failures, auth timeouts)
 - All 15 nodes validated in sequence
 
-**Staging Environment:** Running on `localhost:8083` for pre-production testing.
+**Staging Environment:** Running on `localhost:8083` for pre-production
+testing.
 
 ## 🚀 Production Status
 
@@ -86,8 +93,11 @@ All protected by OAuth 2.0. No token = no access.
 
 ## 🔜 What's Next
 
-Phase 5: PostgreSQL backend for persistent audit logging. Every login, every API call, every configuration change gets logged to a tamper-proof audit trail. Full HIPAA/SOC2 compliance path starts there.
+Phase 5: PostgreSQL backend for persistent audit logging. Every login,
+every API call, every configuration change gets logged to a tamper-proof
+audit trail. Full HIPAA/SOC2 compliance path starts there.
 
 ---
 
-**Sentinel Network is now a production-grade system.** Full auth, full monitoring, full documentation. Ready for enterprise deployment.
+**Sentinel Network is now a production-grade system.** Full auth, full
+monitoring, full documentation. Ready for enterprise deployment.

@@ -69,6 +69,7 @@ in `data/log.json` and is a different kind of log).
   anything's published.
 
 ## 2026-07-22 — Relaunch as REDZOMBI LABS
+
 - Full reskin: radar/ops-deck theme replaced with a terminal/CRT identity
   (red-on-black) and a brutalist PRINT (paper/dot-matrix) light mode.
 - Restructured content model: `modules` → `projects` (with idea/building/
@@ -78,6 +79,7 @@ in `data/log.json` and is a different kind of log).
 - New favicon, rewritten README/DEPLOY docs to match.
 
 ## 2026-07-20 — Initial scaffold
+
 - Base structure: header/bezel, hero with radar sweep, modules board,
   notebook feed, footer.
 - Day (ops deck) / night (red-light ops) theming, auto via
