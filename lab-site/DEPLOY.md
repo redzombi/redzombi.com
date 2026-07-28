@@ -16,7 +16,23 @@ git remote add origin https://github.com/<your-username>/<repo-name>.git
 git push -u origin main
 ```
 
-## 2. Connect the repo in Cloudflare
+## 2. Create the KV namespace (one-time, needed before first deploy)
+
+The signal meter and guestbook store their data in a Cloudflare KV
+namespace, referenced in `wrangler.jsonc` as `LAB_KV`. `wrangler deploy`
+will fail until that binding points at a real namespace ID.
+
+```bash
+npx wrangler login
+npx wrangler kv namespace create LAB_KV
+```
+
+That prints an `id`. Paste it into the `kv_namespaces` entry in the repo
+root's `wrangler.jsonc`, replacing `REPLACE_WITH_KV_NAMESPACE_ID`, commit,
+and push. (Equivalent dashboard path: **Workers & Pages** → **KV** →
+**Create a namespace** — copy the Namespace ID it gives you.)
+
+## 3. Connect the repo in Cloudflare
 
 1. Log into the Cloudflare dashboard.
 2. In the left sidebar: **Workers & Pages** → **Create** → **Workers**
@@ -37,7 +53,7 @@ git push -u origin main
 You'll get a `<worker-name>.<account>.workers.dev` URL immediately —
 that's live and usable right away, domain or not.
 
-## 3. Point your own domain at it (optional, whenever you're ready)
+## 4. Point your own domain at it (optional, whenever you're ready)
 
 1. In the Worker's project, go to **Settings** → **Domains & Routes** →
    **Add** → **Custom Domain**.

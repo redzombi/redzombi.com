@@ -213,6 +213,92 @@
     });
   }
 
+  /* ---------- guestbook ---------- */
+  function renderGuestbook(entries) {
+    const feed = document.getElementById("guestbook-feed");
+    const empty = document.getElementById("guestbook-empty");
+    const count = document.getElementById("guestbook-count");
+    if (!feed) return;
+
+    if (!entries.length) {
+      feed.hidden = true;
+      if (empty) empty.hidden = false;
+      if (count) count.textContent = "0";
+      return;
+    }
+
+    if (empty) empty.hidden = true;
+    feed.hidden = false;
+    if (count) count.textContent = String(entries.length);
+
+    feed.innerHTML = entries
+      .map(function (e) {
+        return (
+          '<article class="log-entry">' +
+          '<div class="log-line"><time>' + escapeHTML(e.date) + "</time>" +
+          '<span class="log-tag">' + escapeHTML(e.name || "anonymous") + "</span></div>" +
+          "<p>" + escapeHTML(e.message) + "</p>" +
+          "</article>"
+        );
+      })
+      .join("");
+  }
+
+  function loadGuestbook() {
+    fetch("/api/guestbook")
+      .then(function (res) { return res.ok ? res.json() : Promise.reject(res.status); })
+      .then(function (data) { renderGuestbook(Array.isArray(data.entries) ? data.entries : []); })
+      .catch(function () { /* guestbook is a bonus feature, fail quietly */ });
+  }
+
+  loadGuestbook();
+
+  const guestbookForm = document.getElementById("guestbook-form");
+  const guestbookStatus = document.getElementById("guestbook-status");
+
+  function setGuestbookStatus(text, isError) {
+    if (!guestbookStatus) return;
+    guestbookStatus.textContent = text;
+    guestbookStatus.classList.toggle("error", !!isError);
+    guestbookStatus.hidden = !text;
+  }
+
+  if (guestbookForm) {
+    guestbookForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const nameEl = document.getElementById("guestbook-name");
+      const messageEl = document.getElementById("guestbook-message");
+      const websiteEl = document.getElementById("guestbook-website");
+      const message = messageEl ? messageEl.value.trim() : "";
+      if (!message) return;
+
+      setGuestbookStatus("transmitting...", false);
+
+      fetch("/api/guestbook", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          name: nameEl ? nameEl.value.trim() : "",
+          message: message,
+          website: websiteEl ? websiteEl.value : "",
+        }),
+      })
+        .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
+        .then(function (result) {
+          if (!result.ok) {
+            setGuestbookStatus(result.data.error || "something went wrong", true);
+            return;
+          }
+          renderGuestbook(Array.isArray(result.data.entries) ? result.data.entries : []);
+          guestbookForm.reset();
+          setGuestbookStatus("sent.", false);
+          setTimeout(function () { setGuestbookStatus("", false); }, 2500);
+        })
+        .catch(function () { setGuestbookStatus("couldn't reach the server — try again", true); });
+    });
+  }
+
   /* ---------- projects ---------- */
   function renderProjects(projects) {
     const grid = document.getElementById("project-grid");
@@ -288,6 +374,47 @@
       .join("");
   }
 
+  function signalLevel(count) {
+    if (count >= 100) return 5;
+    if (count >= 50) return 4;
+    if (count >= 20) return 3;
+    if (count >= 5) return 2;
+    if (count >= 1) return 1;
+    return 0;
+  }
+
+  function renderSignalMeter(count) {
+    const wrap = document.getElementById("post-signal");
+    if (!wrap) return;
+    const level = signalLevel(count);
+    let bars = "";
+    for (let i = 1; i <= 5; i++) {
+      bars += '<span class="' + (i <= level ? "lit" : "") + '"></span>';
+    }
+    wrap.innerHTML =
+      '<span class="bars">' + bars + "</span>" +
+      "<span>SIGNAL &middot; " + count + (count === 1 ? " read" : " reads") + "</span>";
+    wrap.hidden = false;
+  }
+
+  function updateSignalMeter(slug) {
+    const wrap = document.getElementById("post-signal");
+    if (wrap) wrap.hidden = true;
+
+    const seenKey = "signal-seen:" + slug;
+    const alreadySeen = sessionStorage.getItem(seenKey);
+
+    fetch("/api/signal/" + encodeURIComponent(slug), { method: alreadySeen ? "GET" : "POST" })
+      .then(function (res) { return res.ok ? res.json() : Promise.reject(res.status); })
+      .then(function (data) {
+        if (!alreadySeen) sessionStorage.setItem(seenKey, "1");
+        renderSignalMeter(typeof data.count === "number" ? data.count : 0);
+      })
+      .catch(function () {
+        if (wrap) wrap.hidden = true;
+      });
+  }
+
   async function renderPostDetail(slug) {
     const listEl = document.getElementById("post-list");
     const emptyEl = document.getElementById("post-empty");
@@ -300,6 +427,8 @@
       window.location.hash = "posts";
       return;
     }
+
+    updateSignalMeter(slug);
 
     try {
       const res = await fetch("posts/" + encodeURIComponent(slug) + ".md", { cache: "no-store" });
@@ -356,21 +485,32 @@
 
   const COMMANDS = [
     { name: "help", desc: "show keyboard shortcuts" },
-    { name: "clear", desc: "clear all (just a prompt easter egg)" },
     { name: "uptime", desc: "show system uptime" },
+    { name: "whoami", desc: "???" },
+    { name: "sudo", desc: "try it" },
+    { name: "neofetch", desc: "system info, terminal-style" },
+    { name: "cat log.json", desc: "dump the raw log feed" },
+    { name: "clear", desc: "clear the terminal output" },
   ];
+
+  function clearPaletteOutput() {
+    const out = document.getElementById("palette-output");
+    if (out) { out.hidden = true; out.textContent = ""; }
+  }
 
   function openPalette() {
     if (paletteEl) {
       paletteEl.hidden = false;
       paletteInput.focus();
       paletteInput.value = "";
+      clearPaletteOutput();
       searchPalette("");
     }
   }
 
   function closePalette() {
     if (paletteEl) paletteEl.hidden = true;
+    clearPaletteOutput();
   }
 
   let paletteResultData = [];
@@ -411,7 +551,7 @@
           type: "command",
           name: cmd.name,
           desc: cmd.desc,
-          action: function () { executeCommand(cmd.name); closePalette(); },
+          action: function () { executeCommand(cmd.name); },
         });
       }
     });
@@ -440,22 +580,59 @@
     renderPaletteSelection();
   }
 
+  function renderPaletteOutput(text) {
+    const out = document.getElementById("palette-output");
+    if (!out) return;
+    out.textContent = text;
+    out.hidden = false;
+  }
+
   function executeCommand(cmd) {
     switch (cmd) {
       case "help":
-        alert(
+        renderPaletteOutput(
           "keyboard shortcuts:\n" +
           "/ - open command palette\n" +
           "j/k - next/prev post\n" +
           "h/l - scroll left/right\n" +
-          "? - this help"
+          "? - this help\n\n" +
+          "(some old cheat codes still work on this page, too)"
         );
         break;
-      case "clear":
-        alert("root@redzombi:~# clear\n\n");
-        break;
       case "uptime":
-        alert("System uptime: " + (uptimeEl ? uptimeEl.textContent : "unknown"));
+        renderPaletteOutput("System uptime: " + (uptimeEl ? uptimeEl.textContent : "unknown"));
+        break;
+      case "whoami":
+        renderPaletteOutput(
+          "root@redzombi:~# whoami\nnobody. you're a guest on someone else's terminal."
+        );
+        break;
+      case "sudo":
+        renderPaletteOutput(
+          "root@redzombi:~# sudo !!\n" +
+          "Nice try. This incident will not be reported, mostly because\n" +
+          "there's no one around to report it to."
+        );
+        break;
+      case "neofetch":
+        renderPaletteOutput(
+          "        /\\_/\\      guest@redzombi\n" +
+          "       ( o.o )     -------------\n" +
+          "        > ^ <      OS: REDZOMBI LABS\n" +
+          "                   Uptime: " + (uptimeEl ? uptimeEl.textContent : "unknown") + "\n" +
+          "                   Shell: vanilla JS, no framework\n" +
+          "                   Theme: " + (root.getAttribute("data-theme") || "auto") + "\n" +
+          "                   Posts: " + postIndex.length
+        );
+        break;
+      case "cat log.json":
+        fetch("data/log.json")
+          .then(function (r) { return r.json(); })
+          .then(function (data) { renderPaletteOutput(JSON.stringify(data, null, 2)); })
+          .catch(function () { renderPaletteOutput("cat: data/log.json: could not read file"); });
+        break;
+      case "clear":
+        clearPaletteOutput();
         break;
     }
   }
@@ -509,6 +686,7 @@
     // help
     if (key === "?") {
       e.preventDefault();
+      openPalette();
       executeCommand("help");
       return;
     }
@@ -533,6 +711,67 @@
     }
   });
 
+  /* ---------- konami code ---------- */
+  const KONAMI = [
+    "arrowup", "arrowup", "arrowdown", "arrowdown",
+    "arrowleft", "arrowright", "arrowleft", "arrowright", "b", "a",
+  ];
+  let konamiProgress = 0;
+
+  document.addEventListener("keydown", function (e) {
+    const key = e.key.toLowerCase();
+    if (key === KONAMI[konamiProgress]) {
+      konamiProgress++;
+      if (konamiProgress === KONAMI.length) {
+        konamiProgress = 0;
+        triggerMatrixRain();
+      }
+    } else {
+      konamiProgress = key === KONAMI[0] ? 1 : 0;
+    }
+  });
+
+  function triggerMatrixRain() {
+    if (document.getElementById("matrix-rain")) return;
+
+    const canvas = document.createElement("canvas");
+    canvas.id = "matrix-rain";
+    canvas.style.cssText = "position:fixed;inset:0;z-index:9999;cursor:pointer;";
+    canvas.title = "click to dismiss";
+    document.body.appendChild(canvas);
+
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const chars = "アイウエオカキクケコサシスセソ01";
+    const fontSize = 16;
+    const columns = Math.floor(canvas.width / fontSize);
+    const drops = new Array(columns).fill(1);
+    const accent = getComputedStyle(root).getPropertyValue("--accent").trim() || "#ff5b4d";
+
+    const interval = setInterval(function () {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = accent;
+      ctx.font = fontSize + "px monospace";
+      for (let i = 0; i < drops.length; i++) {
+        const char = chars[Math.floor(Math.random() * chars.length)];
+        ctx.fillText(char, i * fontSize, drops[i] * fontSize);
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+        drops[i]++;
+      }
+    }, 50);
+
+    function dismiss() {
+      clearInterval(interval);
+      canvas.remove();
+    }
+
+    canvas.addEventListener("click", dismiss);
+    setTimeout(dismiss, 6000);
+  }
+
   /* ---------- hero status line ---------- */
   function updateHeroStatus(logCount, projectCount, postCount) {
     const statusText = document.getElementById("hero-status");
@@ -547,6 +786,38 @@
       ? "STATUS: ACTIVE · " + parts.join(", ")
       : "STATUS: EMPTY · nothing published yet";
   }
+
+  /* ---------- live Terra Command feed ---------- */
+  function formatCount(n) {
+    if (n >= 1e6) return (n / 1e6).toFixed(1) + "M";
+    if (n >= 1e3) return (n / 1e3).toFixed(1) + "k";
+    return String(n);
+  }
+
+  function updateTerraStatus() {
+    const wrap = document.getElementById("terra-status");
+    const textEl = document.getElementById("terra-status-text");
+    if (!wrap || !textEl) return;
+
+    fetch("https://terra.redzombi.com/data/aircraft.json", { cache: "no-store" })
+      .then(function (res) { return res.ok ? res.json() : Promise.reject(res.status); })
+      .then(function (data) {
+        const aircraft = Array.isArray(data.aircraft) ? data.aircraft.length : 0;
+        const messages = typeof data.messages === "number" ? data.messages : 0;
+        textEl.innerHTML =
+          "LIVE: " + aircraft + " aircraft in range &middot; " +
+          formatCount(messages) + " messages decoded &middot; " +
+          '<a href="https://terra.redzombi.com" target="_blank" rel="noopener">terra.redzombi.com &rarr;</a>';
+        wrap.hidden = false;
+      })
+      .catch(function () {
+        // feeder's offline or unreachable — fail quietly, this is a bonus widget
+        wrap.hidden = true;
+      });
+  }
+
+  updateTerraStatus();
+  setInterval(updateTerraStatus, 30000);
 
   /* ---------- boot ---------- */
   Promise.all([

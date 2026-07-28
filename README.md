@@ -15,7 +15,9 @@ low-friction pattern as the Google Fonts `@import` in the stylesheet.
 
 The one piece of real server-side logic is `src/index.js` — a small
 Cloudflare Worker, described under Structure and Deploy below. Everything
-else is static files served as-is.
+else is static files served as-is. The Worker also backs two small dynamic
+features (the signal meter and the guestbook — see "Fun stuff" below),
+which need a Cloudflare KV namespace; see Deploy.
 
 ## Structure
 
@@ -41,20 +43,47 @@ lab-site/                     the static site — served as-is via the
   CHANGELOG.md                 dev log for the site itself (not the /log — see below)
 src/
   index.js                     Worker entry point. Only runs for requests
-                                with no matching static file — currently
-                                just /post/<slug>, to inject that post's
-                                real title/OG/Twitter tags before a crawler
-                                reads the page (see below). Everything else
-                                (/, /assets/*, /data/*.json, /posts/*.md)
-                                is served directly from `lab-site/` without
-                                touching this script at all.
-wrangler.jsonc                 Worker config: name, entry point (main),
-                                and the `assets` binding pointing at
-                                `lab-site/`. Committed so Cloudflare's build
-                                (`npx wrangler deploy`) uses it directly
-                                instead of re-guessing settings every build.
+                                with no matching static file:
+                                  - /post/<slug>          per-post OG tags
+                                  - /api/signal/<slug>    signal meter (KV)
+                                  - /api/guestbook        guestbook (KV)
+                                Everything else (/, /assets/*, /data/*.json,
+                                /posts/*.md) is served directly from
+                                `lab-site/` without touching this script.
+wrangler.jsonc                 Worker config: name, entry point (main), the
+                                `assets` binding pointing at `lab-site/`,
+                                and the `LAB_KV` namespace binding. Committed
+                                so Cloudflare's build (`npx wrangler deploy`)
+                                uses it directly instead of re-guessing
+                                settings every build.
 README.md                     this file
 ```
+
+## Fun stuff
+
+A few things layered on top of the log/posts/projects model, mostly for
+the fun of it:
+
+- **Live Terra Command feed** (hero section) — a client-side fetch straight
+  to `terra.redzombi.com/data/aircraft.json` (tar1090's own public,
+  CORS-open endpoint — no proxy needed). Shows current aircraft count and
+  total messages decoded. Fails silently and hides itself if the feeder's
+  offline; see `updateTerraStatus()` in `assets/js/main.js`.
+- **Command palette easter eggs** (`/` to open) — `whoami`, `sudo`,
+  `neofetch`, and `cat log.json` alongside the real `help`/`uptime`
+  commands, rendered inline in the palette instead of a native `alert()`.
+  There's also a Konami code (↑↑↓↓←→←→BA) wired to a matrix-rain canvas
+  effect — see the "konami code" section in `main.js`.
+- **Signal meter** (on each post) — a KV-backed reaction counter skinned as
+  SNR bars instead of a plain view count, fitting the SDR theme. One
+  increment per browser session per post (`sessionStorage`-deduped), via
+  `POST /api/signal/<slug>`.
+- **Guestbook** — a KV-backed public form (name optional, message
+  required, 280 chars). Basic anti-abuse: a hidden honeypot field, and a
+  60-second per-IP cooldown (Cloudflare KV's own minimum TTL) via
+  `POST /api/guestbook`. No auth, no moderation UI — it's a personal-site
+  guestbook, not a production comment system; keep that in mind before
+  linking it anywhere with real traffic.
 
 ## Adding a log entry
 
@@ -123,3 +152,6 @@ See `lab-site/DEPLOY.md` for connecting this repo to Cloudflare. Short
 version: Cloudflare runs `npx wrangler deploy` from the repo root on every
 push to `main`, which reads `wrangler.jsonc` and deploys `src/index.js`
 with `lab-site/` bound as static assets.
+
+One manual, one-time step: `wrangler.jsonc`'s `kv_namespaces` entry needs a
+real namespace ID before that deploy will succeed — see DEPLOY.md.

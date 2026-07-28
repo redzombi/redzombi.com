@@ -49,6 +49,10 @@
         <span class="led" aria-hidden="true"></span>
         <span id="hero-status">STATUS: EMPTY &middot; nothing published yet</span>
       </div>
+      <div class="status-line terra-status" id="terra-status" hidden>
+        <span class="led led-live" aria-hidden="true"></span>
+        <span id="terra-status-text"></span>
+      </div>
     </section>
 
     <section class="block" id="log">
@@ -74,6 +78,7 @@
       <div id="post-list" class="post-list" hidden></div>
       <div id="post-detail" class="post-detail" hidden>
         <a href="#posts" class="back">&larr; back to posts</a>
+        <div id="post-signal" class="post-signal" hidden></div>
         <article id="post-article"></article>
       </div>
 
@@ -98,6 +103,38 @@
       </div>
     </section>
 
+    <section class="block" id="guestbook">
+      <div class="block-head">
+        <h2>guestbook</h2>
+        <span class="count">(<span id="guestbook-count">0</span>)</span>
+      </div>
+
+      <form id="guestbook-form" class="guestbook-form">
+        <input
+          id="guestbook-name" name="name" type="text"
+          placeholder="name (optional)" maxlength="40"
+        />
+        <textarea
+          id="guestbook-message" name="message" rows="2" maxlength="280"
+          placeholder="leave a transmission..." required
+        ></textarea>
+        <input
+          id="guestbook-website" name="website" type="text" class="hp-field"
+          tabindex="-1" autocomplete="off" aria-hidden="true"
+        />
+        <div class="guestbook-form-row">
+          <button type="submit">transmit</button>
+          <span id="guestbook-status" class="guestbook-status" hidden></span>
+        </div>
+      </form>
+
+      <div id="guestbook-feed" class="guestbook-feed" hidden></div>
+
+      <div class="empty" id="guestbook-empty">
+        No transmissions yet. Be the first to leave one.
+      </div>
+    </section>
+
   </main>
 
   <footer class="wrap">
@@ -111,6 +148,7 @@
     <div class="palette-box">
       <input id="palette-input" class="palette-input" type="text" placeholder="search posts, run commands... (? for help)" />
       <div id="palette-results" class="palette-results"></div>
+      <pre id="palette-output" class="palette-output" hidden></pre>
     </div>
   </div>
 

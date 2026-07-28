@@ -5,6 +5,26 @@ in `data/log.json` and is a different kind of log).
 
 ## [Unreleased]
 
+## 2026-07-28 — Live Terra Command feed, terminal easter eggs, signal meter, guestbook
+
+- **Live Terra Command feed** in the hero: client-side fetch straight to
+  `terra.redzombi.com/data/aircraft.json` (tar1090's public, CORS-open
+  endpoint). Shows aircraft in range and messages decoded, polls every 30s,
+  hides itself quietly if the feeder's unreachable.
+- **Command palette easter eggs**: `whoami`, `sudo`, `neofetch`, and
+  `cat log.json`, rendered inline in the palette instead of `alert()`.
+  Added a Konami code (↑↑↓↓←→←→BA) triggering a matrix-rain canvas effect.
+- **Signal meter** on each post: a KV-backed view counter skinned as SNR
+  bars instead of a plain number. One increment per session per post.
+  New routes: `GET`/`POST /api/signal/<slug>`.
+- **Guestbook**: a KV-backed public form on the homepage (name optional,
+  message required). Honeypot field plus a 60s per-IP cooldown for basic
+  abuse resistance — no auth or moderation UI, it's a toy, not a comment
+  system. New routes: `GET`/`POST /api/guestbook`.
+- Added a `LAB_KV` namespace binding to `wrangler.jsonc` backing the two
+  features above — needs a real namespace ID before deploy; see
+  `lab-site/DEPLOY.md`.
+
 ## 2026-07-27 — Real post URLs, per-post social previews, syntax highlighting
 
 - **Replaced hash-based post routing (`#post/<slug>`) with real paths**
